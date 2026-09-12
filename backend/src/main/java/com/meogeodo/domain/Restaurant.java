@@ -48,22 +48,22 @@ public class Restaurant {
   @Column(precision = 10, scale = 7)
   private BigDecimal lng;
 
-  @Column(length = 50)
+  @Column(length = 200)
   private String tel;
 
-  @Column(name = "open_time", length = 200)
+  @Column(name = "open_time", columnDefinition = "text")
   private String openTime;
 
-  @Column(name = "rest_date", length = 200)
+  @Column(name = "rest_date", columnDefinition = "text")
   private String restDate;
 
-  @Column(length = 100)
+  @Column(columnDefinition = "text")
   private String parking;
 
-  @Column(length = 100)
+  @Column(columnDefinition = "text")
   private String packing;
 
-  @Column(length = 100)
+  @Column(columnDefinition = "text")
   private String reservation;
 
   @Column(name = "first_image", length = 500)

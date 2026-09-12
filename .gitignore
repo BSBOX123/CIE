@@ -1,6 +1,11 @@
 # ── 비밀정보 (절대 커밋 금지) ──
 API key.txt
 *.key
+# SSH 개인키. 공개 저장소에 올라가면 서버가 그대로 열린다.
+*.pem
+*.ppk
+id_rsa*
+id_ed25519*
 .env
 .env.*
 !.env.example

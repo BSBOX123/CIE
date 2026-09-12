@@ -71,7 +71,16 @@ public class IngestService {
     for (int page = 1; page <= pages; page++) {
       List<Item> items = client.areaBasedList(areaCode, null, page, PAGE_SIZE);
       for (Item item : items) {
-        result = result.plus(ingestOne(item));
+        // 한 건이 실패해도 전체를 멈추지 않는다. 13,000여 건을 받는 작업이라
+        // 예상 못 한 값 하나 때문에 한 시간짜리 적재가 통째로 날아가면 안 된다.
+        // 건너뛴 건은 다음 실행에서 다시 시도된다(modifiedtime 이 저장되지 않으므로).
+        try {
+          result = result.plus(ingestOne(item));
+        } catch (RuntimeException e) {
+          log.warn("  건너뜀 contentid={} ({}): {}",
+              item.contentid(), item.title(), e.getMessage());
+          result = result.plus(new IngestResult(1, 0, 0, 0, 0, 0, 1));
+        }
       }
       log.info("  {}/{} 페이지 완료 — 누적 {}", page, pages, result);
     }
@@ -93,7 +102,7 @@ public class IngestService {
     boolean isNew = existing == null;
 
     if (!isNew && Objects.equals(existing.getSourceModifiedAt(), item.modifiedtime())) {
-      return new IngestResult(1, 0, 0, 1, 0, 0);
+      return new IngestResult(1, 0, 0, 1, 0, 0, 0);
     }
 
     Restaurant restaurant =
@@ -108,7 +117,7 @@ public class IngestService {
 
     MenuOutcome outcome = syncMenus(restaurant, detail, rawMenuText);
     return new IngestResult(
-        1, isNew ? 1 : 0, isNew ? 0 : 1, 0, outcome.menusCreated(), outcome.dishesCreated());
+        1, isNew ? 1 : 0, isNew ? 0 : 1, 0, outcome.menusCreated(), outcome.dishesCreated(), 0);
   }
 
   private void applyListFields(Restaurant restaurant, Item item) {

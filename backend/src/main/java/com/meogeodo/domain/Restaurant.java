@@ -48,7 +48,7 @@ public class Restaurant {
   @Column(precision = 10, scale = 7)
   private BigDecimal lng;
 
-  @Column(length = 200)
+  @Column(columnDefinition = "text")
   private String tel;
 
   @Column(name = "open_time", columnDefinition = "text")

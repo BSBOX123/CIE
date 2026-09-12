@@ -1,0 +1,51 @@
+# ── 비밀정보 (절대 커밋 금지) ──
+API key.txt
+*.key
+.env
+.env.*
+!.env.example
+ai-service/.env
+
+# ── 내부 문서 / 원본 (커밋하지 않음) ──
+# 명세서와 인수인계 문서는 내부용이라 저장소에 올리지 않는다.
+SPEC.md
+HANDOVER.md
+CLAUDE.md
+# 프론트 설계 캔버스 원본(10MB). SPEC.md 는 이 파일을 역산해 쓴 것이다.
+먹어도 돼 (먹 방향).html
+
+# ── Backend (Spring Boot / Gradle) ──
+# 로컬 JDK 절대경로가 들어가므로 커밋하지 않는다. gradle.properties.example 참조.
+backend/gradle.properties
+backend/build/
+backend/.gradle/
+backend/out/
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# ── Frontend (React / TS) ──
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.vite/
+npm-debug.log*
+
+# ── AI Service (Python / FastAPI) ──
+ai-service/__pycache__/
+ai-service/**/__pycache__/
+ai-service/.venv/
+ai-service/venv/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── 원본 데이터 (CLAUDE.md 안전규칙: 수정/삭제 금지) ──
+data/raw/
+
+# ── IDE / OS ──
+.idea/
+.vscode/
+*.iml
+.DS_Store

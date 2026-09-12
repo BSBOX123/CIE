@@ -1,0 +1,43 @@
+# 통합 테스트용 인메모리 DB (H2 의 MySQL 호환 모드).
+#
+# H2 는 MySQL 을 완전히 재현하지 못한다(JSON 처리, 예약어, 문자셋). 여기서는
+# 엔티티 매핑과 서비스 로직만 검증하고, 스키마 자체는 실제 MySQL 을 띄워
+# 따로 확인해야 한다.
+spring:
+  datasource:
+    url: jdbc:h2:mem:meogeodo;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate.dialect: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+  sql:
+    init:
+      mode: always
+      # 어휘 시드를 테스트에서 따로 관리하면 정본과 어긋난다.
+      # 실제 마이그레이션 파일을 그대로 실행한다 (V4는 JSONB 등
+      # H2가 못 다루는 타입을 쓰지 않아 그대로 돌아간다).
+      # 앞의 reset 은 테이블을 비우기만 하고 시드 내용은 갖지 않는다.
+      data-locations:
+        - classpath:vocabulary-reset.sql
+        - classpath:db/migration/V4__vocabulary.sql
+        - classpath:test-feedback-vocabulary.sql
+
+meogeodo:
+  security:
+    # 테스트 전용 고정 키. 운영 키와 무관하다.
+    # 32바이트 정확히. 길이가 안 맞으면 기동이 실패한다.
+    encryption-key: "bWVvZ2VvZG8tdGVzdC1rZXktZXhhY3RseS0zMmJ5dGU="
+    jwt-secret: "test-only-jwt-secret-at-least-32-bytes-long!!"
+    access-token-ttl: PT1H
+
+  public-data:
+    api-key: test-key
+    kor-service-base-url: http://localhost/unused
+  ai-service:
+    base-url: http://localhost/unused

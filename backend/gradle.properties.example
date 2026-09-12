@@ -1,0 +1,8 @@
+# 이 파일을 gradle.properties 로 복사하고 경로를 자기 환경에 맞게 고치세요.
+# JDK 21 경로 확인: /usr/libexec/java_home -v 21 (macOS)
+#
+# Gradle 데몬 자체를 JDK 21로 실행한다.
+# 시스템 기본이 JDK 26이면 Gradle이 "Unsupported class file major version 70"으로 죽는다.
+# build.gradle 의 toolchain 은 컴파일 대상만 정하므로 이것과 별개다.
+org.gradle.java.home=/path/to/your/jdk-21
+org.gradle.jvmargs=-Xmx2g

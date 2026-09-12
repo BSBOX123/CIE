@@ -1,0 +1,26 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: meogeodo-db
+    command:
+      # 한글과 이모지를 위해 utf8mb4. utf8(3바이트)로는 깨진다.
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      # 애플리케이션이 UTC 로 저장하므로 서버도 UTC 로 맞춘다.
+      - --default-time-zone=+00:00
+    environment:
+      MYSQL_DATABASE: meogeodo
+      MYSQL_USER: meogeodo
+      MYSQL_PASSWORD: ${DB_PASSWORD:-meogeodo}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpw}
+    # 호스트 3306 은 이미 설치된 MySQL 9.2 가 쓰고 있으므로 3307 로 뺀다.
+    # 기존 설치본을 건드리지 않기 위함이다.
+    ports: ["3307:3306"]
+    volumes: ["meogeodo-mysqldata:/var/lib/mysql"]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+volumes:
+  meogeodo-mysqldata:

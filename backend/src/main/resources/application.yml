@@ -1,3 +1,8 @@
+server:
+  # nginx 뒤에 있을 때 X-Forwarded-* 를 신뢰한다. 이게 없으면 앱이 자신을
+  # http 로 인식해 리다이렉트·문서 URL 이 http 로 나가고, 브라우저가 막는다.
+  forward-headers-strategy: framework
+
 spring:
   application:
     name: meogeodo-backend

@@ -22,7 +22,10 @@ backend/.gradle/
 backend/out/
 *.class
 *.jar
-!gradle/wrapper/gradle-wrapper.jar
+# gradle-wrapper.jar 는 예외로 커밋한다. 이게 없으면 clone 한 쪽에서
+# ./gradlew 가 "Could not find or load main class GradleWrapperMain" 으로 죽는다.
+# 패턴에 / 가 들어가면 .gitignore 가 있는 위치(루트) 기준이라 ** 가 필요하다.
+!**/gradle/wrapper/gradle-wrapper.jar
 
 # ── Frontend (React / TS) ──
 frontend/node_modules/

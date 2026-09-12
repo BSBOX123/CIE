@@ -30,10 +30,20 @@ spring:
 
 meogeodo:
   security:
-    # 테스트 전용 고정 키. 운영 키와 무관하다.
-    # 32바이트 정확히. 길이가 안 맞으면 기동이 실패한다.
-    encryption-key: "bWVvZ2VvZG8tdGVzdC1rZXktZXhhY3RseS0zMmJ5dGU="
-    jwt-secret: "test-only-jwt-secret-at-least-32-bytes-long!!"
+    # 테스트 전용 고정 더미 값. 비밀이 아니므로 공개 저장소에 그대로 있어도 된다.
+    #
+    # 운영은 환경변수(MEOGEODO_ENCRYPTION_KEY, JWT_SECRET)로만 받는다.
+    # application.yml 의 기본값이 비어 있어 여기로 폴백하지 않으며,
+    # 이 파일은 src/test 라 bootJar 에도 들어가지 않는다.
+    #
+    # 랜덤으로 만들지 않고 고정하는 이유: H2 가 이름 있는 인메모리 DB
+    # (jdbc:h2:mem:meogeodo)라 여러 스프링 컨텍스트가 같은 DB 를 공유한다.
+    # 컨텍스트마다 키가 다르면 A 가 암호화한 행을 B 가 못 읽는다.
+    #
+    # 암호화 키는 디코드했을 때 정확히 32바이트여야 한다.
+    #   PUBLIC-TEST-KEY-NOT-A-SECRET!!!!
+    encryption-key: "UFVCTElDLVRFU1QtS0VZLU5PVC1BLVNFQ1JFVCEhISE="
+    jwt-secret: "PUBLIC-TEST-JWT-NOT-A-SECRET-DO-NOT-USE-IN-PROD"
     access-token-ttl: PT1H
 
   public-data:

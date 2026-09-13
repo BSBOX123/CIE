@@ -19,8 +19,15 @@ public interface MenuTagView {
 
   Long getDishId();
 
-  /** 태깅 전이면 null. 판정을 낼 수 없다는 뜻이다 (SPEC 9.1). */
-  java.time.OffsetDateTime getTaggedAt();
+  /**
+   * 태깅됐으면 1, 아니면 0. 0이면 판정을 낼 수 없다는 뜻이다 (SPEC 9.1).
+   *
+   * <p>시각이 아니라 플래그로 받는다. 네이티브 쿼리 프로젝션에서 MySQL 드라이버가
+   * 돌려주는 {@code java.sql.Timestamp} 를 {@code OffsetDateTime} 으로 바꾸지 못해
+   * 500 이 났다. 태그가 하나도 없을 때는 값이 전부 null 이라 변환이 일어나지 않아
+   * 드러나지 않는다 — 첫 태깅이 들어온 순간 검색과 상세가 동시에 죽는다.
+   */
+  Integer getTagged();
 
   /** CARE | ALLERGEN. 태그가 없으면 null. */
   String getTagType();

@@ -257,7 +257,7 @@ public class RestaurantSearchService {
           byRestaurant.computeIfAbsent(v.getRestaurantId(), k -> new LinkedHashMap<>());
       Acc acc = menus.computeIfAbsent(v.getMenuId(), k -> new Acc(
           v.getMenuName(), v.getPrice(), Boolean.TRUE.equals(v.getRepresentative()),
-          v.getTaggedAt() != null,
+          Integer.valueOf(1).equals(v.getTagged()),
           new LinkedHashSet<>(), new LinkedHashSet<>(), new LinkedHashSet<>(),
           new ArrayList<>()));
 

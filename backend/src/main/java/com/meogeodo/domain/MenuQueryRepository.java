@@ -15,7 +15,7 @@ public interface MenuQueryRepository extends Repository<Menu, Long> {
              m.price         AS price,
              m.is_representative AS representative,
              d.id            AS dishId,
-             d.tagged_at     AS taggedAt,
+             CASE WHEN d.tagged_at IS NULL THEN 0 ELSE 1 END AS tagged,
              t.tag_type      AS tagType,
              t.tag_value     AS tagValue,
              t.amount        AS amount,

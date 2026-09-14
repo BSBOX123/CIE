@@ -201,12 +201,40 @@ docker compose -f docker-compose.prod.yml up -d backend
 
 ---
 
-## 7. 다시 배포할 때
+## 6-1. 서버 접속 (SSH 가 막힌 곳에서)
+
+학교·회사 네트워크는 아웃바운드 22번을 막는 경우가 많다. SSM 을 쓰면 443 으로
+붙으므로 그런 곳에서도 된다. 인스턴스에 `CIE-SSM-Profile` 이 붙어 있어야 한다.
 
 ```bash
-cd CIE
-git pull
-docker compose -f docker-compose.prod.yml up -d --build
+# 셸
+aws ssm start-session --target i-0bd8ffad33886895e
+
+# DB 터널 (ssh -L 대체). 로컬 3308 → 서버 MySQL
+aws ssm start-session --target i-0bd8ffad33886895e \
+  --document-name AWS-StartPortForwardingSessionToRemoteHost \
+  --parameters '{"host":["127.0.0.1"],"portNumber":["3307"],"localPortNumber":["3308"]}'
+```
+
+로컬에 플러그인이 필요하다: `brew install --cask session-manager-plugin`
+
+## 7. 다시 배포할 때
+
+**백엔드는 로컬에서 빌드해 보낸다.** 서버(1GB)에서 Gradle 을 돌리면 메모리를
+다 먹어 sshd 까지 죽는 일이 있었다.
+
+```bash
+./infra/deploy-backend.sh
+```
+
+이 스크립트가 하는 일: 로컬 `bootJar` → S3 업로드 → SSM 으로 서버가 내려받아
+`Dockerfile.runtime`(jar 만 담는 이미지)으로 재기동 → 응답 확인.
+
+ai-service 나 db 설정을 바꿨을 때만 서버에서 직접 올린다.
+
+```bash
+aws ssm start-session --target i-0bd8ffad33886895e
+cd ~/CIE && git pull && docker compose -f docker-compose.prod.yml up -d ai-service
 ```
 
 `.env` 와 DB 볼륨은 그대로 유지된다.

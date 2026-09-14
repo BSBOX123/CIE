@@ -41,7 +41,11 @@ services:
     mem_limit: 220m
 
   backend:
-    build: ./backend
+    # 서버에서 Gradle 을 돌리지 않는다. jar 는 개발자 PC 에서 빌드해
+    # S3 를 거쳐 backend/app.jar 로 내려받는다 (infra/deploy-backend.sh).
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.runtime
     container_name: meogeodo-backend
     restart: unless-stopped
     depends_on:
@@ -50,8 +54,6 @@ services:
       # 컨테이너끼리는 서비스 이름으로 붙는다. localhost 가 아니다.
       DB_URL: jdbc:mysql://db:3306/meogeodo?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC&rewriteBatchedStatements=true
       AI_SERVICE_URL: http://ai-service:8000
-      # 컨테이너 메모리(380m) 안에서 힙을 고정한다. 나머지는 JVM 자체와 스택이 쓴다.
-      JAVA_OPTS: "-Xmx240m -Xss512k -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
     env_file: [.env]
     ports: ["127.0.0.1:8080:8080"]
     mem_limit: 380m

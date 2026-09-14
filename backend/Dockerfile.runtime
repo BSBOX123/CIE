@@ -1,0 +1,17 @@
+# 미리 빌드된 jar 만 담는 런타임 전용 이미지.
+#
+# backend/Dockerfile 은 컨테이너 안에서 Gradle 빌드까지 하는데, 1GB 서버에서는
+# 그 빌드가 메모리를 다 먹어 sshd 가 죽는 일이 있었다. 빌드는 개발자 PC 에서
+# 하고 서버는 결과물만 받는다 (infra/deploy-backend.sh).
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+
+RUN addgroup -S app && adduser -S app -G app
+# deploy 스크립트가 S3 에서 받아 이 경로에 둔다.
+COPY app.jar app.jar
+RUN chown app:app app.jar
+USER app
+
+ENV JAVA_OPTS="-Xmx240m -Xss512k -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+EXPOSE 8080
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]

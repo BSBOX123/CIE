@@ -70,6 +70,7 @@ def to_facts(item: dict[str, str]) -> NutritionFacts:
         food_code=item.get("FOOD_CD"),
         food_name=item.get("FOOD_NM_KR"),
         source_kind=item.get("FOOD_OR_NM"),
+        food_category=item.get("FOOD_CAT1_NM"),
         serving_size=item.get("SERVING_SIZE"),
         values=extract(item),
     )

@@ -106,13 +106,34 @@ class TaggingServiceTest {
     when(aiService.lookupNutrition(any()))
         .thenReturn(new NutritionLookupResponse(1, 1,
             Map.of("김치찌개", new NutritionEntry("CD1", "김치찌개", "외식(분석 함량)",
-                Map.of("나트륨", 491.0)))));
+                "찌개 및 전골류", Map.of("나트륨", 491.0)))));
     givenTagResult(result("김치찌개", List.of(), List.of(), false));
 
     tagging.tagPending();
 
     assertThat(dishes.findById(dish.getId()).orElseThrow().getNutrition())
         .containsEntry("나트륨", 491.0);
+  }
+
+  @Test
+  @DisplayName("식품군을 dish 에 저장한다 — 1회 섭취량 계산의 근거다")
+  void storesFoodCategory() {
+    // 이 값이 저장되지 않으면 태깅 때 1회 섭취량이 기본값 150g으로 고정된다.
+    // 국·탕(350g)·면(400g)은 실제 섭취량이 훨씬 많아 나트륨이 과소평가되고,
+    // 고혈압 사용자가 육개장·갈비탕에 경고를 받지 못한다.
+    // 실제로 연결이 빠져 있었고, 측정해 보니 매칭된 음식의 절반에서
+    // 판정이 달라졌다.
+    var dish = givenDish("김치찌개");
+    when(aiService.lookupNutrition(any()))
+        .thenReturn(new NutritionLookupResponse(1, 1,
+            Map.of("김치찌개", new NutritionEntry("CD1", "김치찌개", "외식(분석 함량)",
+                "찌개 및 전골류", Map.of("나트륨", 491.0)))));
+    givenTagResult(result("김치찌개", List.of(), List.of(), false));
+
+    tagging.tagPending();
+
+    assertThat(dishes.findById(dish.getId()).orElseThrow().getFoodCategory())
+        .isEqualTo("찌개 및 전골류");
   }
 
   @Test

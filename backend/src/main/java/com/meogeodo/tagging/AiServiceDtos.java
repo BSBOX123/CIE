@@ -42,7 +42,12 @@ public final class AiServiceDtos {
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   public record NutritionEntry(
-      String foodCode, String foodName, String sourceKind, Map<String, Double> values) {}
+      String foodCode,
+      String foodName,
+      String sourceKind,
+      /** 식약처 FOOD_CAT1_NM. 1회 섭취 중량 결정에 쓴다. */
+      String foodCategory,
+      Map<String, Double> values) {}
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   public record NutritionLookupResponse(

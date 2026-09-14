@@ -152,6 +152,10 @@ public class TaggingService {
       }
       dish.setNutrition(entry.values());
       dish.setNutritionFoodCd(entry.foodCode());
+      // 식품군을 저장하지 않으면 태깅 때 1회 섭취량이 기본값(150g)으로 고정된다.
+      // 국·탕(350g)·면(400g)처럼 실제 섭취량이 훨씬 많은 음식의 나트륨이
+      // 과소평가되어, 고혈압 사용자가 육개장·갈비탕에 경고를 받지 못한다.
+      dish.setFoodCategory(entry.foodCategory());
       dishes.save(dish);
     }
     log.info("영양성분 매칭 {}/{}", lookup.matched(), lookup.requested());

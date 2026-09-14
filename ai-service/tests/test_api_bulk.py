@@ -61,6 +61,7 @@ class StubNutrition:
             food_code="CD1",
             food_name=dish_name,
             source_kind="외식(분석 함량)",
+            food_category="찌개 및 전골류",
             values=extract(json.loads((FIXTURES / "kimchi_jjigae.json").read_text("utf-8"))),
         )
 
@@ -164,6 +165,17 @@ def test_영양성분_일괄조회(client):
     body = client.post("/nutrition/lookup", json=["김치찌개", "된장찌개"]).json()
     assert body["matched"] == 2
     assert body["results"]["김치찌개"]["values"]["나트륨"] == 491.0
+
+
+def test_응답에_식품군이_실린다(client):
+    """1회 섭취량 결정에 쓰이는 FOOD_CAT1_NM 이 빠지면 안 된다.
+
+    이 값이 없으면 모든 음식이 기본 150g으로 계산돼, 국·탕·면처럼 실제로
+    300~400g을 먹는 음식의 나트륨이 크게 과소평가된다.
+    """
+    res = client.post("/nutrition/lookup", json=["김치찌개"])
+    assert res.status_code == 200
+    assert res.json()["results"]["김치찌개"]["food_category"] == "찌개 및 전골류"
 
 
 def test_매칭_실패는_결과에서_빠진다(client):

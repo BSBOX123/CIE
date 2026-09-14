@@ -141,6 +141,9 @@ async def nutrition_lookup(names: list[str] = Body(..., min_length=1)) -> dict[s
                 "food_code": facts.food_code,
                 "food_name": facts.food_name,
                 "source_kind": facts.source_kind,
+                # 백엔드가 dish.food_category 에 저장했다가 태깅 때 되돌려준다.
+                # 이게 없으면 1회 섭취량이 기본값으로 고정된다.
+                "food_category": facts.food_category,
                 "values": {k.value: v for k, v in facts.values.items()},
             }
     return {"requested": len(names), "matched": len(found), "results": found}

@@ -88,10 +88,12 @@ public class ReportService {
   @Transactional(readOnly = true)
   public ReviewListResponse listForRestaurant(Long viewerId, Long restaurantId) {
     List<Review> found = reviews.findByRestaurantIdOrderByCreatedAtDesc(restaurantId);
+    String name = restaurantName(restaurantId);
     List<ReviewView> views = new ArrayList<>();
     for (Review r : found) {
       AppUser author = r.getUserId() == null ? null : users.findById(r.getUserId()).orElse(null);
-      views.add(toView(r, author, r.getUserId() != null && r.getUserId().equals(viewerId)));
+      views.add(
+          toView(r, author, r.getUserId() != null && r.getUserId().equals(viewerId), name));
     }
     List<String> derived = flags.findByRestaurantIdIn(List.of(restaurantId)).stream()
         .filter(f -> f.getSource() == RestaurantFlag.Source.COMMUNITY)
@@ -104,8 +106,13 @@ public class ReportService {
   @Transactional(readOnly = true)
   public List<ReviewView> listMine(Long userId) {
     AppUser user = requireUser(userId);
-    return reviews.findByUserIdOrderByCreatedAtDesc(userId).stream()
-        .map(r -> toView(r, user, true))
+    List<Review> mine = reviews.findByUserIdOrderByCreatedAtDesc(userId);
+    // 건마다 식당을 조회하면 기록이 쌓일수록 쿼리가 선형으로 늘어난다.
+    Map<Long, String> names = new java.util.HashMap<>();
+    restaurants.findAllById(mine.stream().map(Review::getRestaurantId).distinct().toList())
+        .forEach(r -> names.put(r.getId(), r.getName()));
+    return mine.stream()
+        .map(r -> toView(r, user, true, names.get(r.getRestaurantId())))
         .toList();
   }
 
@@ -169,9 +176,21 @@ public class ReportService {
 
   // ── 변환 ──────────────────────────────────────────────────────────
 
+  private String restaurantName(Long restaurantId) {
+    return restaurants.findById(restaurantId).map(r -> r.getName()).orElse(null);
+  }
+
   private ReviewView toView(Review review, AppUser author, boolean mine) {
+    return toView(review, author, mine, restaurantName(review.getRestaurantId()));
+  }
+
+  /** 식당 이름을 이미 알고 있을 때. 목록에서 건마다 조회하지 않기 위함이다. */
+  private ReviewView toView(
+      Review review, AppUser author, boolean mine, String restaurantName) {
     return new ReviewView(
         review.getId(),
+        review.getRestaurantId(),
+        restaurantName,
         mine ? "내 후기" : authorLabel(author),
         mine,
         review.getCreatedAt().toLocalDate(),

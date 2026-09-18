@@ -51,6 +51,11 @@ public final class ReportDtos {
   @Schema(description = "제보 1건")
   public record ReviewView(
       Long id,
+      @Schema(description = "어느 식당의 제보인지", example = "12") Long restaurantId,
+      @Schema(
+              description = "식당 이름. '내 기록' 화면에서 어느 가게였는지 보여 주는 데 쓴다",
+              example = "초당할머니순두부")
+          String restaurantName,
       @Schema(description = "작성자 표기. 나이·이름 대신 파생한 값이다", example = "60대 · 당뇨")
           String author,
       @Schema(description = "내가 쓴 제보인지. 비로그인이면 항상 false", example = "false")

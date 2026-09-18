@@ -288,6 +288,19 @@ class ReportServiceTest {
     }
 
     @Test
+    @DisplayName("내 기록에 어느 가게였는지가 함께 온다")
+    void myReportsCarryRestaurant() {
+      // 요청 문구만 있고 가게를 모르면 '내 기록' 화면을 그릴 수 없다.
+      var user = signup("ac1b", 1958, Set.of("당뇨"));
+      report(user, true, List.of("국물은 따로 담아 주세요"), Set.of());
+      em.flush();
+
+      var mine = reports.listMine(user.getId());
+      assertThat(mine.get(0).restaurantId()).isEqualTo(restaurant.getId());
+      assertThat(mine.get(0).restaurantName()).isEqualTo("초당할머니순두부");
+    }
+
+    @Test
     @DisplayName("남의 제보는 지울 수 없다")
     void cannotDeleteOthers() {
       var owner = signup("ac2", 1958, Set.of());

@@ -25,26 +25,39 @@ from app.nutrition.field_map import extract
 from app.nutrition.models import NutritionFacts
 
 #: 조리 형태 우선순위 (낮을수록 우선). SPEC 6.4-a.
-_SOURCE_RANK: dict[str, int] = {
-    "외식(분석 함량)": 0,
-    "가정식(분석 함량)": 1,
-    "외식": 2,
-    "가정식": 3,
+#: 조리 형태 우선순위. 이 서비스가 판정하는 것은 식당에서 나오는 조리된 음식이다.
+#:
+#: 원래 ``FOOD_OR_NM`` 을 봤는데, 이 필드는 응답에 있기는 하나 값이 항상 ``None``
+#: 이다. ``None or ""`` 이 빈 문자열이 되어 아래 제외 조건이 한 번도 참이 되지
+#: 않았고, 예외도 경고도 없이 조용히 통과했다. 실측해 보니 채택된 레코드의
+#: **절반이 가공식품**이었다. 분류는 ``DB_GRP_NM`` / ``DB_CLASS_NM`` 에 있다.
+_CLASS_RANK: dict[str, int] = {
+    "외식": 0,      # 식당에서 나오는 그대로. 가장 가깝다
+    "품목대표": 1,  # 그 음식의 표준 대표값
 }
 
-#: 조리 전 제품이라 조리된 음식 판정에 쓸 수 없는 조리 형태.
-_EXCLUDED_SOURCES: frozenset[str] = frozenset({"가공식품"})
+#: 쓰지 않는 대분류.
+#:
+#: ``가공식품`` 은 조리 전 제품 값이다. 실측: ``소면`` 의 가공식품 레코드는
+#: 나트륨 830mg/100g(건면 제품)이지만 삶은 소면은 그렇지 않다.
+#: ``원재료성`` 은 ``돼지고기, 앞다리(항정살), 생것`` 처럼 조리 전 재료다.
+_EXCLUDED_GROUPS: frozenset[str] = frozenset({"가공식품", "원재료성"})
 
 #: 접두 일치에서 허용하는 구분자. 이 뒤는 부재료 수식으로 본다.
 #: ``김치찌개_돼지고기`` 는 허용하지만 ``명품한우등심 언양식불고기`` 는
 #: 공백으로 이어진 다른 메뉴명이므로 허용하지 않는다.
 _MODIFIER_PREFIXES: tuple[str, ...] = ("_", "(")
 
+#: 쓰지 않는 세부분류. ``음식`` 으로 분류돼 있어도 간편조리세트·밀키트는
+#: 조리 전 제품 값이라 식당 음식과 다르다.
+#: 예: ``순두부찌개_간편조리세트_강릉식 짬뽕 순두부``
+_EXCLUDED_CLASSES: frozenset[str] = frozenset({"상용제품"})
 
 def _rank(item: dict[str, str], query: str) -> tuple[int, int] | None:
     """(이름 일치 등급, 조리형태 등급). 채택 불가면 ``None``."""
-    source = (item.get("FOOD_OR_NM") or "").strip()
-    if source in _EXCLUDED_SOURCES:
+    group = (item.get("DB_GRP_NM") or "").strip()
+    klass = (item.get("DB_CLASS_NM") or "").strip()
+    if group in _EXCLUDED_GROUPS or klass in _EXCLUDED_CLASSES:
         return None
 
     name = (item.get("FOOD_NM_KR") or "").strip()
@@ -54,7 +67,7 @@ def _rank(item: dict[str, str], query: str) -> tuple[int, int] | None:
         name_rank = 1
     else:
         return None
-    return name_rank, _SOURCE_RANK.get(source, 9)
+    return name_rank, _CLASS_RANK.get(klass, 9)
 
 
 def pick_best(items: list[dict[str, str]], query: str) -> dict[str, str] | None:
@@ -69,7 +82,8 @@ def to_facts(item: dict[str, str]) -> NutritionFacts:
     return NutritionFacts(
         food_code=item.get("FOOD_CD"),
         food_name=item.get("FOOD_NM_KR"),
-        source_kind=item.get("FOOD_OR_NM"),
+        # FOOD_OR_NM 은 항상 비어 있다. 실제 분류는 DB_GRP_NM/DB_CLASS_NM.
+        source_kind=item.get("DB_CLASS_NM"),
         food_category=item.get("FOOD_CAT1_NM"),
         serving_size=item.get("SERVING_SIZE"),
         values=extract(item),

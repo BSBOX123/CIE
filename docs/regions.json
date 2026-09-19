@@ -1,0 +1,1554 @@
+{
+ "_comment": "지역 선택 목록 (2026-09-20 생성). 좌표는 관광공사 음식점이 가장 몰린 지점 기준 — 그 좌표로 /api/restaurants·/api/foods 를 부르면 된다. 시도만 고르면 default 시군구(식당이 가장 밀집한 곳) 좌표를 쓴다. hasLocalFood=false 인 시도는 지역 음식 섹션을 숨긴다. 광주·전남은 행정상 '전남광주통합특별시'(regionCode 12)지만 사용자가 찾기 쉽게 둘로 나눴다.",
+ "regions": [
+  {
+   "name": "서울",
+   "regionCode": "11",
+   "hasLocalFood": false,
+   "default": "종로구",
+   "lat": 37.57585,
+   "lng": 126.98346,
+   "districts": [
+    {
+     "name": "강남구",
+     "lat": 37.51849,
+     "lng": 127.03842,
+     "restaurantCount": 259
+    },
+    {
+     "name": "강동구",
+     "lat": 37.53649,
+     "lng": 127.1353,
+     "restaurantCount": 37
+    },
+    {
+     "name": "강북구",
+     "lat": 37.64716,
+     "lng": 127.01008,
+     "restaurantCount": 17
+    },
+    {
+     "name": "강서구",
+     "lat": 37.55966,
+     "lng": 126.83202,
+     "restaurantCount": 42
+    },
+    {
+     "name": "관악구",
+     "lat": 37.47985,
+     "lng": 126.95288,
+     "restaurantCount": 36
+    },
+    {
+     "name": "광진구",
+     "lat": 37.54504,
+     "lng": 127.0787,
+     "restaurantCount": 22
+    },
+    {
+     "name": "구로구",
+     "lat": 37.48726,
+     "lng": 126.89024,
+     "restaurantCount": 10
+    },
+    {
+     "name": "금천구",
+     "lat": 37.4724,
+     "lng": 126.89934,
+     "restaurantCount": 7
+    },
+    {
+     "name": "노원구",
+     "lat": 37.62652,
+     "lng": 127.07453,
+     "restaurantCount": 27
+    },
+    {
+     "name": "도봉구",
+     "lat": 37.66294,
+     "lng": 127.0331,
+     "restaurantCount": 13
+    },
+    {
+     "name": "동대문구",
+     "lat": 37.58265,
+     "lng": 127.05417,
+     "restaurantCount": 35
+    },
+    {
+     "name": "동작구",
+     "lat": 37.51263,
+     "lng": 126.93682,
+     "restaurantCount": 20
+    },
+    {
+     "name": "마포구",
+     "lat": 37.55174,
+     "lng": 126.92287,
+     "restaurantCount": 106
+    },
+    {
+     "name": "서대문구",
+     "lat": 37.56633,
+     "lng": 126.93507,
+     "restaurantCount": 37
+    },
+    {
+     "name": "서초구",
+     "lat": 37.49344,
+     "lng": 127.0127,
+     "restaurantCount": 90
+    },
+    {
+     "name": "성동구",
+     "lat": 37.54629,
+     "lng": 127.04846,
+     "restaurantCount": 160
+    },
+    {
+     "name": "성북구",
+     "lat": 37.59283,
+     "lng": 127.00441,
+     "restaurantCount": 55
+    },
+    {
+     "name": "송파구",
+     "lat": 37.50754,
+     "lng": 127.11086,
+     "restaurantCount": 89
+    },
+    {
+     "name": "양천구",
+     "lat": 37.52259,
+     "lng": 126.86484,
+     "restaurantCount": 10
+    },
+    {
+     "name": "영등포구",
+     "lat": 37.52043,
+     "lng": 126.91811,
+     "restaurantCount": 64
+    },
+    {
+     "name": "용산구",
+     "lat": 37.53599,
+     "lng": 126.98712,
+     "restaurantCount": 106
+    },
+    {
+     "name": "은평구",
+     "lat": 37.60618,
+     "lng": 126.91687,
+     "restaurantCount": 29
+    },
+    {
+     "name": "종로구",
+     "lat": 37.57585,
+     "lng": 126.98346,
+     "restaurantCount": 191
+    },
+    {
+     "name": "중구",
+     "lat": 37.56293,
+     "lng": 126.98377,
+     "restaurantCount": 123
+    },
+    {
+     "name": "중랑구",
+     "lat": 37.5965,
+     "lng": 127.09315,
+     "restaurantCount": 16
+    }
+   ]
+  },
+  {
+   "name": "부산",
+   "regionCode": "26",
+   "hasLocalFood": true,
+   "default": "해운대구",
+   "lat": 35.16156,
+   "lng": 129.17039,
+   "districts": [
+    {
+     "name": "강서구",
+     "lat": 35.10137,
+     "lng": 128.90128,
+     "restaurantCount": 42
+    },
+    {
+     "name": "금정구",
+     "lat": 35.2448,
+     "lng": 129.0843,
+     "restaurantCount": 27
+    },
+    {
+     "name": "기장군",
+     "lat": 35.215,
+     "lng": 129.22368,
+     "restaurantCount": 113
+    },
+    {
+     "name": "남구",
+     "lat": 35.13132,
+     "lng": 129.10076,
+     "restaurantCount": 18
+    },
+    {
+     "name": "동구",
+     "lat": 35.11942,
+     "lng": 129.04016,
+     "restaurantCount": 16
+    },
+    {
+     "name": "동래구",
+     "lat": 35.2053,
+     "lng": 129.08298,
+     "restaurantCount": 29
+    },
+    {
+     "name": "부산진구",
+     "lat": 35.15748,
+     "lng": 129.05788,
+     "restaurantCount": 36
+    },
+    {
+     "name": "북구",
+     "lat": 35.22298,
+     "lng": 129.00751,
+     "restaurantCount": 2
+    },
+    {
+     "name": "사상구",
+     "lat": 35.15012,
+     "lng": 128.98516,
+     "restaurantCount": 16
+    },
+    {
+     "name": "사하구",
+     "lat": 35.10006,
+     "lng": 128.97463,
+     "restaurantCount": 11
+    },
+    {
+     "name": "서구",
+     "lat": 35.07667,
+     "lng": 129.01872,
+     "restaurantCount": 15
+    },
+    {
+     "name": "수영구",
+     "lat": 35.15763,
+     "lng": 129.11793,
+     "restaurantCount": 39
+    },
+    {
+     "name": "연제구",
+     "lat": 35.18557,
+     "lng": 129.08084,
+     "restaurantCount": 10
+    },
+    {
+     "name": "영도구",
+     "lat": 35.08529,
+     "lng": 129.06027,
+     "restaurantCount": 22
+    },
+    {
+     "name": "중구",
+     "lat": 35.10031,
+     "lng": 129.03027,
+     "restaurantCount": 32
+    },
+    {
+     "name": "해운대구",
+     "lat": 35.16156,
+     "lng": 129.17039,
+     "restaurantCount": 88
+    }
+   ]
+  },
+  {
+   "name": "대구",
+   "regionCode": "27",
+   "hasLocalFood": true,
+   "default": "중구",
+   "lat": 35.86978,
+   "lng": 128.59635,
+   "districts": [
+    {
+     "name": "군위군",
+     "lat": 36.09958,
+     "lng": 128.66485,
+     "restaurantCount": 12
+    },
+    {
+     "name": "남구",
+     "lat": 35.83641,
+     "lng": 128.57521,
+     "restaurantCount": 31
+    },
+    {
+     "name": "달서구",
+     "lat": 35.82091,
+     "lng": 128.53864,
+     "restaurantCount": 21
+    },
+    {
+     "name": "달성군",
+     "lat": 35.78569,
+     "lng": 128.63969,
+     "restaurantCount": 41
+    },
+    {
+     "name": "동구",
+     "lat": 35.98548,
+     "lng": 128.62449,
+     "restaurantCount": 50
+    },
+    {
+     "name": "북구",
+     "lat": 35.88648,
+     "lng": 128.58274,
+     "restaurantCount": 23
+    },
+    {
+     "name": "서구",
+     "lat": 35.86324,
+     "lng": 128.5625,
+     "restaurantCount": 12
+    },
+    {
+     "name": "수성구",
+     "lat": 35.83669,
+     "lng": 128.62156,
+     "restaurantCount": 67
+    },
+    {
+     "name": "중구",
+     "lat": 35.86978,
+     "lng": 128.59635,
+     "restaurantCount": 44
+    }
+   ]
+  },
+  {
+   "name": "인천",
+   "regionCode": "28",
+   "hasLocalFood": false,
+   "default": "제물포구",
+   "lat": 37.47447,
+   "lng": 126.62478,
+   "districts": [
+    {
+     "name": "강화군",
+     "lat": 37.62321,
+     "lng": 126.5027,
+     "restaurantCount": 115
+    },
+    {
+     "name": "검단구",
+     "lat": 37.59435,
+     "lng": 126.67309,
+     "restaurantCount": 17
+    },
+    {
+     "name": "계양구",
+     "lat": 37.54411,
+     "lng": 126.72356,
+     "restaurantCount": 21
+    },
+    {
+     "name": "남동구",
+     "lat": 37.45012,
+     "lng": 126.70966,
+     "restaurantCount": 58
+    },
+    {
+     "name": "미추홀구",
+     "lat": 37.45738,
+     "lng": 126.66155,
+     "restaurantCount": 33
+    },
+    {
+     "name": "부평구",
+     "lat": 37.49662,
+     "lng": 126.72467,
+     "restaurantCount": 24
+    },
+    {
+     "name": "서해구",
+     "lat": 37.53232,
+     "lng": 126.64722,
+     "restaurantCount": 55
+    },
+    {
+     "name": "연수구",
+     "lat": 37.39381,
+     "lng": 126.65079,
+     "restaurantCount": 100
+    },
+    {
+     "name": "영종구",
+     "lat": 37.43266,
+     "lng": 126.41772,
+     "restaurantCount": 72
+    },
+    {
+     "name": "옹진군",
+     "lat": 37.25464,
+     "lng": 126.50549,
+     "restaurantCount": 16
+    },
+    {
+     "name": "제물포구",
+     "lat": 37.47447,
+     "lng": 126.62478,
+     "restaurantCount": 65
+    }
+   ]
+  },
+  {
+   "name": "광주",
+   "regionCode": "12",
+   "hasLocalFood": false,
+   "default": "동구",
+   "lat": 35.14857,
+   "lng": 126.92539,
+   "districts": [
+    {
+     "name": "광산구",
+     "lat": 35.19652,
+     "lng": 126.83046,
+     "restaurantCount": 42
+    },
+    {
+     "name": "남구",
+     "lat": 35.13901,
+     "lng": 126.90985,
+     "restaurantCount": 22
+    },
+    {
+     "name": "동구",
+     "lat": 35.14857,
+     "lng": 126.92539,
+     "restaurantCount": 30
+    },
+    {
+     "name": "북구",
+     "lat": 35.18713,
+     "lng": 126.89804,
+     "restaurantCount": 29
+    },
+    {
+     "name": "서구",
+     "lat": 35.15247,
+     "lng": 126.85278,
+     "restaurantCount": 51
+    }
+   ]
+  },
+  {
+   "name": "대전",
+   "regionCode": "30",
+   "hasLocalFood": false,
+   "default": "유성구",
+   "lat": 36.35665,
+   "lng": 127.34162,
+   "districts": [
+    {
+     "name": "대덕구",
+     "lat": 36.36222,
+     "lng": 127.43532,
+     "restaurantCount": 27
+    },
+    {
+     "name": "동구",
+     "lat": 36.33401,
+     "lng": 127.43689,
+     "restaurantCount": 43
+    },
+    {
+     "name": "서구",
+     "lat": 36.35262,
+     "lng": 127.37841,
+     "restaurantCount": 52
+    },
+    {
+     "name": "유성구",
+     "lat": 36.35665,
+     "lng": 127.34162,
+     "restaurantCount": 198
+    },
+    {
+     "name": "중구",
+     "lat": 36.32536,
+     "lng": 127.42448,
+     "restaurantCount": 39
+    }
+   ]
+  },
+  {
+   "name": "울산",
+   "regionCode": "31",
+   "hasLocalFood": true,
+   "default": "남구",
+   "lat": 35.53857,
+   "lng": 129.33537,
+   "districts": [
+    {
+     "name": "남구",
+     "lat": 35.53857,
+     "lng": 129.33537,
+     "restaurantCount": 39
+    },
+    {
+     "name": "동구",
+     "lat": 35.49493,
+     "lng": 129.42952,
+     "restaurantCount": 23
+    },
+    {
+     "name": "북구",
+     "lat": 35.56021,
+     "lng": 129.35775,
+     "restaurantCount": 29
+    },
+    {
+     "name": "울주군",
+     "lat": 35.56486,
+     "lng": 129.11991,
+     "restaurantCount": 82
+    },
+    {
+     "name": "중구",
+     "lat": 35.55655,
+     "lng": 129.31995,
+     "restaurantCount": 42
+    }
+   ]
+  },
+  {
+   "name": "세종",
+   "regionCode": "36110",
+   "hasLocalFood": false,
+   "default": "세종",
+   "lat": 36.50298,
+   "lng": 127.2484,
+   "districts": []
+  },
+  {
+   "name": "경기",
+   "regionCode": "41",
+   "hasLocalFood": false,
+   "default": "고양시",
+   "lat": 37.6722,
+   "lng": 126.77544,
+   "districts": [
+    {
+     "name": "가평군",
+     "lat": 37.67761,
+     "lng": 127.48861,
+     "restaurantCount": 115
+    },
+    {
+     "name": "고양시",
+     "lat": 37.6722,
+     "lng": 126.77544,
+     "restaurantCount": 271
+    },
+    {
+     "name": "과천시",
+     "lat": 37.44658,
+     "lng": 127.00046,
+     "restaurantCount": 23
+    },
+    {
+     "name": "광명시",
+     "lat": 37.45222,
+     "lng": 126.87171,
+     "restaurantCount": 38
+    },
+    {
+     "name": "광주시",
+     "lat": 37.45825,
+     "lng": 127.21684,
+     "restaurantCount": 159
+    },
+    {
+     "name": "구리시",
+     "lat": 37.59388,
+     "lng": 127.13832,
+     "restaurantCount": 38
+    },
+    {
+     "name": "군포시",
+     "lat": 37.34701,
+     "lng": 126.94334,
+     "restaurantCount": 13
+    },
+    {
+     "name": "김포시",
+     "lat": 37.65056,
+     "lng": 126.66714,
+     "restaurantCount": 97
+    },
+    {
+     "name": "남양주시",
+     "lat": 37.56246,
+     "lng": 127.23484,
+     "restaurantCount": 169
+    },
+    {
+     "name": "동두천시",
+     "lat": 37.90435,
+     "lng": 127.05515,
+     "restaurantCount": 23
+    },
+    {
+     "name": "부천시",
+     "lat": 37.50132,
+     "lng": 126.77565,
+     "restaurantCount": 76
+    },
+    {
+     "name": "성남시",
+     "lat": 37.38409,
+     "lng": 127.11395,
+     "restaurantCount": 172
+    },
+    {
+     "name": "수원시",
+     "lat": 37.28018,
+     "lng": 127.02847,
+     "restaurantCount": 214
+    },
+    {
+     "name": "시흥시",
+     "lat": 37.38442,
+     "lng": 126.83877,
+     "restaurantCount": 98
+    },
+    {
+     "name": "안산시",
+     "lat": 37.27626,
+     "lng": 126.57091,
+     "restaurantCount": 97
+    },
+    {
+     "name": "안성시",
+     "lat": 37.04603,
+     "lng": 127.15915,
+     "restaurantCount": 75
+    },
+    {
+     "name": "안양시",
+     "lat": 37.40077,
+     "lng": 126.95653,
+     "restaurantCount": 62
+    },
+    {
+     "name": "양주시",
+     "lat": 37.7186,
+     "lng": 126.9724,
+     "restaurantCount": 66
+    },
+    {
+     "name": "양평군",
+     "lat": 37.50727,
+     "lng": 127.4555,
+     "restaurantCount": 93
+    },
+    {
+     "name": "여주시",
+     "lat": 37.2914,
+     "lng": 127.63847,
+     "restaurantCount": 78
+    },
+    {
+     "name": "연천군",
+     "lat": 38.02413,
+     "lng": 127.06971,
+     "restaurantCount": 17
+    },
+    {
+     "name": "오산시",
+     "lat": 37.18741,
+     "lng": 127.05429,
+     "restaurantCount": 29
+    },
+    {
+     "name": "용인시",
+     "lat": 37.33822,
+     "lng": 127.05485,
+     "restaurantCount": 218
+    },
+    {
+     "name": "의왕시",
+     "lat": 37.38159,
+     "lng": 127.00314,
+     "restaurantCount": 68
+    },
+    {
+     "name": "의정부시",
+     "lat": 37.73207,
+     "lng": 127.04709,
+     "restaurantCount": 45
+    },
+    {
+     "name": "이천시",
+     "lat": 37.29842,
+     "lng": 127.40435,
+     "restaurantCount": 69
+    },
+    {
+     "name": "파주시",
+     "lat": 37.71664,
+     "lng": 126.69959,
+     "restaurantCount": 186
+    },
+    {
+     "name": "평택시",
+     "lat": 37.00897,
+     "lng": 127.11256,
+     "restaurantCount": 95
+    },
+    {
+     "name": "포천시",
+     "lat": 37.77759,
+     "lng": 127.1608,
+     "restaurantCount": 84
+    },
+    {
+     "name": "하남시",
+     "lat": 37.55674,
+     "lng": 127.20363,
+     "restaurantCount": 89
+    },
+    {
+     "name": "화성시",
+     "lat": 37.20809,
+     "lng": 127.06852,
+     "restaurantCount": 124
+    }
+   ]
+  },
+  {
+   "name": "강원",
+   "regionCode": "51",
+   "hasLocalFood": false,
+   "default": "강릉시",
+   "lat": 37.76972,
+   "lng": 128.91065,
+   "districts": [
+    {
+     "name": "강릉시",
+     "lat": 37.76972,
+     "lng": 128.91065,
+     "restaurantCount": 478
+    },
+    {
+     "name": "고성군",
+     "lat": 38.27489,
+     "lng": 128.55351,
+     "restaurantCount": 44
+    },
+    {
+     "name": "남해군",
+     "lat": 34.84954,
+     "lng": 128.06377,
+     "restaurantCount": 1
+    },
+    {
+     "name": "동해시",
+     "lat": 37.53359,
+     "lng": 129.11793,
+     "restaurantCount": 29
+    },
+    {
+     "name": "삼척시",
+     "lat": 37.44473,
+     "lng": 129.16908,
+     "restaurantCount": 35
+    },
+    {
+     "name": "속초시",
+     "lat": 38.20203,
+     "lng": 128.58841,
+     "restaurantCount": 108
+    },
+    {
+     "name": "양구군",
+     "lat": 38.09759,
+     "lng": 127.99299,
+     "restaurantCount": 17
+    },
+    {
+     "name": "양양군",
+     "lat": 38.09006,
+     "lng": 128.6304,
+     "restaurantCount": 56
+    },
+    {
+     "name": "영월군",
+     "lat": 37.18262,
+     "lng": 128.46752,
+     "restaurantCount": 31
+    },
+    {
+     "name": "원주시",
+     "lat": 37.33761,
+     "lng": 127.95129,
+     "restaurantCount": 94
+    },
+    {
+     "name": "인제군",
+     "lat": 38.1989,
+     "lng": 128.3458,
+     "restaurantCount": 19
+    },
+    {
+     "name": "정선군",
+     "lat": 37.3808,
+     "lng": 128.66432,
+     "restaurantCount": 29
+    },
+    {
+     "name": "철원군",
+     "lat": 38.18759,
+     "lng": 127.28778,
+     "restaurantCount": 42
+    },
+    {
+     "name": "춘천시",
+     "lat": 37.8778,
+     "lng": 127.73683,
+     "restaurantCount": 120
+    },
+    {
+     "name": "태백시",
+     "lat": 37.17304,
+     "lng": 128.98623,
+     "restaurantCount": 19
+    },
+    {
+     "name": "평창군",
+     "lat": 37.61561,
+     "lng": 128.37672,
+     "restaurantCount": 319
+    },
+    {
+     "name": "홍천군",
+     "lat": 37.69051,
+     "lng": 127.69641,
+     "restaurantCount": 31
+    },
+    {
+     "name": "화천군",
+     "lat": 38.09395,
+     "lng": 127.76019,
+     "restaurantCount": 9
+    },
+    {
+     "name": "횡성군",
+     "lat": 37.48775,
+     "lng": 127.9822,
+     "restaurantCount": 64
+    }
+   ]
+  },
+  {
+   "name": "충북",
+   "regionCode": "43",
+   "hasLocalFood": false,
+   "default": "청주시",
+   "lat": 36.63303,
+   "lng": 127.48648,
+   "districts": [
+    {
+     "name": "괴산군",
+     "lat": 36.80852,
+     "lng": 127.79491,
+     "restaurantCount": 25
+    },
+    {
+     "name": "단양군",
+     "lat": 36.98312,
+     "lng": 128.37022,
+     "restaurantCount": 38
+    },
+    {
+     "name": "보은군",
+     "lat": 36.53116,
+     "lng": 127.8219,
+     "restaurantCount": 27
+    },
+    {
+     "name": "영동군",
+     "lat": 36.17207,
+     "lng": 127.78023,
+     "restaurantCount": 17
+    },
+    {
+     "name": "옥천군",
+     "lat": 36.31449,
+     "lng": 127.5771,
+     "restaurantCount": 38
+    },
+    {
+     "name": "음성군",
+     "lat": 37.11452,
+     "lng": 127.66757,
+     "restaurantCount": 17
+    },
+    {
+     "name": "제천시",
+     "lat": 37.13623,
+     "lng": 128.20709,
+     "restaurantCount": 53
+    },
+    {
+     "name": "증평군",
+     "lat": 36.7813,
+     "lng": 127.57878,
+     "restaurantCount": 14
+    },
+    {
+     "name": "진천군",
+     "lat": 36.85528,
+     "lng": 127.44706,
+     "restaurantCount": 26
+    },
+    {
+     "name": "청주시",
+     "lat": 36.63303,
+     "lng": 127.48648,
+     "restaurantCount": 169
+    },
+    {
+     "name": "충주시",
+     "lat": 36.97429,
+     "lng": 127.93395,
+     "restaurantCount": 65
+    }
+   ]
+  },
+  {
+   "name": "충남",
+   "regionCode": "44",
+   "hasLocalFood": false,
+   "default": "공주시",
+   "lat": 36.46439,
+   "lng": 127.12441,
+   "districts": [
+    {
+     "name": "계룡시",
+     "lat": 36.2867,
+     "lng": 127.23797,
+     "restaurantCount": 13
+    },
+    {
+     "name": "공주시",
+     "lat": 36.46439,
+     "lng": 127.12441,
+     "restaurantCount": 75
+    },
+    {
+     "name": "금산군",
+     "lat": 36.09486,
+     "lng": 127.49279,
+     "restaurantCount": 18
+    },
+    {
+     "name": "논산시",
+     "lat": 36.19475,
+     "lng": 127.09926,
+     "restaurantCount": 28
+    },
+    {
+     "name": "당진시",
+     "lat": 36.88462,
+     "lng": 126.64633,
+     "restaurantCount": 24
+    },
+    {
+     "name": "보령시",
+     "lat": 36.34682,
+     "lng": 126.60452,
+     "restaurantCount": 30
+    },
+    {
+     "name": "부여군",
+     "lat": 36.28304,
+     "lng": 126.91243,
+     "restaurantCount": 36
+    },
+    {
+     "name": "서산시",
+     "lat": 36.7806,
+     "lng": 126.4538,
+     "restaurantCount": 31
+    },
+    {
+     "name": "서천군",
+     "lat": 36.0107,
+     "lng": 126.72732,
+     "restaurantCount": 29
+    },
+    {
+     "name": "아산시",
+     "lat": 36.76713,
+     "lng": 126.98077,
+     "restaurantCount": 69
+    },
+    {
+     "name": "예산군",
+     "lat": 36.6576,
+     "lng": 126.6208,
+     "restaurantCount": 37
+    },
+    {
+     "name": "천안시",
+     "lat": 36.81641,
+     "lng": 127.12815,
+     "restaurantCount": 128
+    },
+    {
+     "name": "청양군",
+     "lat": 36.40202,
+     "lng": 126.85594,
+     "restaurantCount": 10
+    },
+    {
+     "name": "태안군",
+     "lat": 36.50887,
+     "lng": 126.34451,
+     "restaurantCount": 61
+    },
+    {
+     "name": "홍성군",
+     "lat": 36.6009,
+     "lng": 126.66388,
+     "restaurantCount": 23
+    }
+   ]
+  },
+  {
+   "name": "전북",
+   "regionCode": "52",
+   "hasLocalFood": false,
+   "default": "군산시",
+   "lat": 35.9722,
+   "lng": 126.71076,
+   "districts": [
+    {
+     "name": "고창군",
+     "lat": 35.43576,
+     "lng": 126.70518,
+     "restaurantCount": 37
+    },
+    {
+     "name": "군산시",
+     "lat": 35.9722,
+     "lng": 126.71076,
+     "restaurantCount": 127
+    },
+    {
+     "name": "김제시",
+     "lat": 35.80366,
+     "lng": 126.88848,
+     "restaurantCount": 29
+    },
+    {
+     "name": "남원시",
+     "lat": 35.40519,
+     "lng": 127.38527,
+     "restaurantCount": 49
+    },
+    {
+     "name": "무주군",
+     "lat": 35.90695,
+     "lng": 127.76003,
+     "restaurantCount": 25
+    },
+    {
+     "name": "부안군",
+     "lat": 35.62599,
+     "lng": 126.47155,
+     "restaurantCount": 31
+    },
+    {
+     "name": "순창군",
+     "lat": 35.37285,
+     "lng": 127.13654,
+     "restaurantCount": 14
+    },
+    {
+     "name": "완주군",
+     "lat": 35.90437,
+     "lng": 127.24328,
+     "restaurantCount": 37
+    },
+    {
+     "name": "익산시",
+     "lat": 35.95061,
+     "lng": 126.95603,
+     "restaurantCount": 42
+    },
+    {
+     "name": "임실군",
+     "lat": 35.61438,
+     "lng": 127.28379,
+     "restaurantCount": 28
+    },
+    {
+     "name": "장수군",
+     "lat": 35.7314,
+     "lng": 127.58558,
+     "restaurantCount": 8
+    },
+    {
+     "name": "전주시",
+     "lat": 35.81778,
+     "lng": 127.13531,
+     "restaurantCount": 114
+    },
+    {
+     "name": "정읍시",
+     "lat": 35.56807,
+     "lng": 126.85765,
+     "restaurantCount": 28
+    },
+    {
+     "name": "진안군",
+     "lat": 35.77388,
+     "lng": 127.4162,
+     "restaurantCount": 24
+    }
+   ]
+  },
+  {
+   "name": "전남",
+   "regionCode": "12",
+   "hasLocalFood": false,
+   "default": "여수시",
+   "lat": 34.73772,
+   "lng": 127.73201,
+   "districts": [
+    {
+     "name": "강진군",
+     "lat": 34.63988,
+     "lng": 126.77111,
+     "restaurantCount": 23
+    },
+    {
+     "name": "고흥군",
+     "lat": 34.5274,
+     "lng": 127.13482,
+     "restaurantCount": 20
+    },
+    {
+     "name": "곡성군",
+     "lat": 35.27808,
+     "lng": 127.29985,
+     "restaurantCount": 27
+    },
+    {
+     "name": "광양시",
+     "lat": 34.97563,
+     "lng": 127.58022,
+     "restaurantCount": 33
+    },
+    {
+     "name": "구례군",
+     "lat": 35.23519,
+     "lng": 127.48204,
+     "restaurantCount": 23
+    },
+    {
+     "name": "나주시",
+     "lat": 35.03123,
+     "lng": 126.71455,
+     "restaurantCount": 40
+    },
+    {
+     "name": "담양군",
+     "lat": 35.32195,
+     "lng": 126.98233,
+     "restaurantCount": 76
+    },
+    {
+     "name": "목포시",
+     "lat": 34.79004,
+     "lng": 126.38362,
+     "restaurantCount": 58
+    },
+    {
+     "name": "무안군",
+     "lat": 34.81057,
+     "lng": 126.4681,
+     "restaurantCount": 15
+    },
+    {
+     "name": "보성군",
+     "lat": 34.84764,
+     "lng": 127.34262,
+     "restaurantCount": 19
+    },
+    {
+     "name": "순천시",
+     "lat": 34.94799,
+     "lng": 127.50878,
+     "restaurantCount": 49
+    },
+    {
+     "name": "신안군",
+     "lat": 35.00126,
+     "lng": 126.13968,
+     "restaurantCount": 19
+    },
+    {
+     "name": "여수시",
+     "lat": 34.73772,
+     "lng": 127.73201,
+     "restaurantCount": 209
+    },
+    {
+     "name": "영광군",
+     "lat": 35.36011,
+     "lng": 126.44457,
+     "restaurantCount": 27
+    },
+    {
+     "name": "영암군",
+     "lat": 34.72523,
+     "lng": 126.56801,
+     "restaurantCount": 18
+    },
+    {
+     "name": "완도군",
+     "lat": 34.31716,
+     "lng": 126.75002,
+     "restaurantCount": 25
+    },
+    {
+     "name": "장성군",
+     "lat": 35.30171,
+     "lng": 126.77127,
+     "restaurantCount": 22
+    },
+    {
+     "name": "장흥군",
+     "lat": 34.67624,
+     "lng": 126.90603,
+     "restaurantCount": 19
+    },
+    {
+     "name": "진도군",
+     "lat": 34.4815,
+     "lng": 126.26404,
+     "restaurantCount": 16
+    },
+    {
+     "name": "함평군",
+     "lat": 35.06436,
+     "lng": 126.52368,
+     "restaurantCount": 22
+    },
+    {
+     "name": "해남군",
+     "lat": 34.57077,
+     "lng": 126.59907,
+     "restaurantCount": 17
+    },
+    {
+     "name": "화순군",
+     "lat": 35.05731,
+     "lng": 126.98555,
+     "restaurantCount": 24
+    }
+   ]
+  },
+  {
+   "name": "경북",
+   "regionCode": "47",
+   "hasLocalFood": true,
+   "default": "경주시",
+   "lat": 35.8407,
+   "lng": 129.21405,
+   "districts": [
+    {
+     "name": "경산시",
+     "lat": 35.81672,
+     "lng": 128.75551,
+     "restaurantCount": 40
+    },
+    {
+     "name": "경주시",
+     "lat": 35.8407,
+     "lng": 129.21405,
+     "restaurantCount": 211
+    },
+    {
+     "name": "고령군",
+     "lat": 35.72883,
+     "lng": 128.27032,
+     "restaurantCount": 12
+    },
+    {
+     "name": "구미시",
+     "lat": 36.12516,
+     "lng": 128.33027,
+     "restaurantCount": 34
+    },
+    {
+     "name": "김천시",
+     "lat": 36.12336,
+     "lng": 128.11123,
+     "restaurantCount": 22
+    },
+    {
+     "name": "문경시",
+     "lat": 36.75614,
+     "lng": 128.07812,
+     "restaurantCount": 37
+    },
+    {
+     "name": "봉화군",
+     "lat": 36.91254,
+     "lng": 128.80029,
+     "restaurantCount": 10
+    },
+    {
+     "name": "상주시",
+     "lat": 36.41452,
+     "lng": 128.15755,
+     "restaurantCount": 26
+    },
+    {
+     "name": "성주군",
+     "lat": 35.79824,
+     "lng": 128.1469,
+     "restaurantCount": 16
+    },
+    {
+     "name": "안동시",
+     "lat": 36.56543,
+     "lng": 128.72788,
+     "restaurantCount": 28
+    },
+    {
+     "name": "영덕군",
+     "lat": 36.36093,
+     "lng": 129.39029,
+     "restaurantCount": 21
+    },
+    {
+     "name": "영양군",
+     "lat": 36.66394,
+     "lng": 129.11705,
+     "restaurantCount": 11
+    },
+    {
+     "name": "영주시",
+     "lat": 36.8236,
+     "lng": 128.62273,
+     "restaurantCount": 44
+    },
+    {
+     "name": "영천시",
+     "lat": 35.96752,
+     "lng": 128.93866,
+     "restaurantCount": 17
+    },
+    {
+     "name": "예천군",
+     "lat": 36.65207,
+     "lng": 128.4522,
+     "restaurantCount": 16
+    },
+    {
+     "name": "울릉군",
+     "lat": 37.48847,
+     "lng": 130.90894,
+     "restaurantCount": 13
+    },
+    {
+     "name": "울진군",
+     "lat": 36.68018,
+     "lng": 129.46008,
+     "restaurantCount": 15
+    },
+    {
+     "name": "의성군",
+     "lat": 36.34655,
+     "lng": 128.69897,
+     "restaurantCount": 9
+    },
+    {
+     "name": "청도군",
+     "lat": 35.64575,
+     "lng": 128.74528,
+     "restaurantCount": 31
+    },
+    {
+     "name": "청송군",
+     "lat": 36.43938,
+     "lng": 129.08375,
+     "restaurantCount": 21
+    },
+    {
+     "name": "칠곡군",
+     "lat": 36.00299,
+     "lng": 128.59206,
+     "restaurantCount": 28
+    },
+    {
+     "name": "포항시",
+     "lat": 36.04645,
+     "lng": 129.36959,
+     "restaurantCount": 85
+    }
+   ]
+  },
+  {
+   "name": "경남",
+   "regionCode": "48",
+   "hasLocalFood": true,
+   "default": "통영시",
+   "lat": 34.84118,
+   "lng": 128.42302,
+   "districts": [
+    {
+     "name": "거제시",
+     "lat": 34.88818,
+     "lng": 128.62558,
+     "restaurantCount": 224
+    },
+    {
+     "name": "거창군",
+     "lat": 35.68418,
+     "lng": 127.91436,
+     "restaurantCount": 33
+    },
+    {
+     "name": "고성군",
+     "lat": 34.95735,
+     "lng": 128.32377,
+     "restaurantCount": 21
+    },
+    {
+     "name": "김해시",
+     "lat": 35.18478,
+     "lng": 128.79874,
+     "restaurantCount": 61
+    },
+    {
+     "name": "남해군",
+     "lat": 34.80145,
+     "lng": 128.04299,
+     "restaurantCount": 55
+    },
+    {
+     "name": "밀양시",
+     "lat": 35.49417,
+     "lng": 128.75226,
+     "restaurantCount": 38
+    },
+    {
+     "name": "사천시",
+     "lat": 34.93149,
+     "lng": 128.07031,
+     "restaurantCount": 36
+    },
+    {
+     "name": "산청군",
+     "lat": 35.41506,
+     "lng": 127.87429,
+     "restaurantCount": 29
+    },
+    {
+     "name": "양산시",
+     "lat": 35.31782,
+     "lng": 128.99725,
+     "restaurantCount": 55
+    },
+    {
+     "name": "의령군",
+     "lat": 35.31923,
+     "lng": 128.26065,
+     "restaurantCount": 22
+    },
+    {
+     "name": "진주시",
+     "lat": 35.19077,
+     "lng": 128.08368,
+     "restaurantCount": 48
+    },
+    {
+     "name": "창녕군",
+     "lat": 35.44753,
+     "lng": 128.52894,
+     "restaurantCount": 24
+    },
+    {
+     "name": "창원시",
+     "lat": 35.20595,
+     "lng": 128.57663,
+     "restaurantCount": 176
+    },
+    {
+     "name": "통영시",
+     "lat": 34.84118,
+     "lng": 128.42302,
+     "restaurantCount": 149
+    },
+    {
+     "name": "하동군",
+     "lat": 35.2119,
+     "lng": 127.6395,
+     "restaurantCount": 53
+    },
+    {
+     "name": "함안군",
+     "lat": 35.25475,
+     "lng": 128.4226,
+     "restaurantCount": 21
+    },
+    {
+     "name": "함양군",
+     "lat": 35.51997,
+     "lng": 127.72537,
+     "restaurantCount": 28
+    },
+    {
+     "name": "합천군",
+     "lat": 35.56737,
+     "lng": 128.16155,
+     "restaurantCount": 43
+    }
+   ]
+  },
+  {
+   "name": "제주",
+   "regionCode": "50",
+   "hasLocalFood": false,
+   "default": "제주시",
+   "lat": 33.50637,
+   "lng": 126.519,
+   "districts": [
+    {
+     "name": "서귀포시",
+     "lat": 33.24661,
+     "lng": 126.55989,
+     "restaurantCount": 273
+    },
+    {
+     "name": "제주시",
+     "lat": 33.50637,
+     "lng": 126.519,
+     "restaurantCount": 426
+    }
+   ]
+  }
+ ]
+}

@@ -74,12 +74,18 @@ public class LocalFoodService {
   static final Set<String> COVERED_REGIONS = Set.of("26", "27", "31", "47", "48");
 
   private static final Map<String, String> REGION_NAMES = Map.ofEntries(
-      Map.entry("11", "서울"), Map.entry("26", "부산"), Map.entry("27", "대구"),
+      Map.entry("11", "서울"), Map.entry("12", "전남"), Map.entry("26", "부산"), Map.entry("27", "대구"),
       Map.entry("28", "인천"), Map.entry("29", "광주"), Map.entry("30", "대전"),
       Map.entry("31", "울산"), Map.entry("36", "세종"), Map.entry("41", "경기"),
       Map.entry("43", "충북"), Map.entry("44", "충남"), Map.entry("46", "전남"),
       Map.entry("47", "경북"), Map.entry("48", "경남"), Map.entry("50", "제주"),
-      Map.entry("51", "강원"), Map.entry("52", "전북"));
+      Map.entry("51", "강원"), Map.entry("52", "전북"), Map.entry("36110", "세종"));
+
+  /**
+   * 광주와 전남은 2026 년 "전남광주통합특별시"(코드 12)로 합쳐졌다. 사용자는 여전히
+   * 광주·전남으로 부르므로 옛 광주광역시의 구는 "광주"로 보여 준다.
+   */
+  private static final Set<String> GWANGJU_DISTRICTS = Set.of("동구", "서구", "남구", "북구", "광산구");
 
   private final LocalFoodRepository foods;
   private final LocalFoodTipRepository tips;
@@ -215,8 +221,15 @@ public class LocalFoodService {
     Place p = nearest.get(0);
     String[] addr = p.addr1() == null ? new String[0] : p.addr1().trim().split("\\s+");
     String code = p.regionCode() != null ? p.regionCode() : codeFromAddress(addr);
+    String district = addr.length > 1 ? addr[1] : null;
     String name = code == null ? (addr.length > 0 ? addr[0] : null) : REGION_NAMES.get(code);
-    return new Region(code, name, addr.length > 1 ? addr[1] : null);
+    if ("12".equals(code) && GWANGJU_DISTRICTS.contains(district)) {
+      name = "광주";
+    }
+    if (name == null && addr.length > 0) {
+      name = addr[0];  // 모르는 코드면 주소의 시도 이름을 그대로
+    }
+    return new Region(code, name, district);
   }
 
   /** 시도 코드가 비어 오는 항목이 있다. 주소 첫 낱말로 보충한다. */

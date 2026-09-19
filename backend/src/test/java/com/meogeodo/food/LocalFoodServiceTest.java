@@ -135,6 +135,17 @@ class LocalFoodServiceTest {
     }
 
     @Test
+    @DisplayName("전남광주통합특별시(12)의 옛 광주 구는 '광주', 나머지는 '전남'으로 보여 준다")
+    void gwangjuJeonnam() {
+      tour.add("충장로식당", 35.1470, 126.9190, "전남광주통합특별시 동구 충장로 1", "12");
+      assertThat(service.list(null, 35.1470, 126.9190).region()).isEqualTo("광주");
+
+      tour.reset();
+      tour.add("여수식당", 34.7400, 127.7300, "전남광주통합특별시 여수시 중앙로 1", "12");
+      assertThat(service.list(null, 34.7400, 127.7300).region()).isEqualTo("전남");
+    }
+
+    @Test
     @DisplayName("근처에 식당이 하나도 없으면 지역을 모른다고 답한다")
     void noRestaurantNearby() {
       var result = service.list(null, LAT, LNG);

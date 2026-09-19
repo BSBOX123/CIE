@@ -211,11 +211,13 @@ public class TourApiClient implements TourApi {
     if (!fault.isMissingNode()) {
       String code = fault.path("returnReasonCode").asText();
       String msg = fault.path("returnAuthMsg").asText(fault.path("errMsg").asText());
+      // 일일 한도도 HTTP 429 로 온다. 코드를 먼저 봐야 한다 — 429 만 보고 재시도하면
+      // 다시 해도 안 되는 요청을 세 번씩 기다렸다 보낸다 (2026-09-20 상세가 2.5초씩 걸림).
+      if (RATE_PER_DAY.equals(code)) {
+        throw new TourApiException(operation + " 일일 호출 한도 초과 — 자정에 풀립니다");
+      }
       if (RATE_PER_SECOND.equals(code) || status == 429) {
         throw new RetryableException(operation + " 초당 한도 초과");
-      }
-      if (RATE_PER_DAY.equals(code)) {
-        throw new TourApiException(operation + " 일일 호출 한도 초과 — 내일 풀립니다");
       }
       throw new TourApiException(operation + " 오류 " + code + ": " + msg);
     }

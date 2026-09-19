@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -91,6 +93,18 @@ public class TourApiClient implements TourApi {
             + "&numOfRows=" + rows + "&pageNo=" + pageNo);
     List<Place> places = items(body).stream().map(TourApiClient::toPlace).toList();
     return new NearbyPage(places, body.path("totalCount").asInt(places.size()));
+  }
+
+  @Override
+  public List<Place> keyword(String keyword, int rows) {
+    if (keyword == null || keyword.isBlank()) {
+      return List.of();
+    }
+    JsonNode body = call("searchKeyword2",
+        "contentTypeId=" + CONTENT_TYPE_RESTAURANT
+            + "&keyword=" + URLEncoder.encode(keyword.trim(), StandardCharsets.UTF_8)
+            + "&arrange=A&numOfRows=" + rows + "&pageNo=1");
+    return items(body).stream().map(TourApiClient::toPlace).toList();
   }
 
   @Override
@@ -234,7 +248,9 @@ public class TourApiClient implements TourApi {
         number(n, "mapy"), // 위도. mapx/mapy 를 뒤바꾸면 지도가 통째로 어긋난다
         number(n, "mapx"), // 경도
         number(n, "dist"),
-        text(n, "firstimage"));
+        text(n, "firstimage"),
+        text(n, "lDongRegnCd"),
+        text(n, "lDongSignguCd"));
   }
 
   private static Intro toIntro(JsonNode n) {

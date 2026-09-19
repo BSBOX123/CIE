@@ -148,18 +148,53 @@ public class RestaurantSearchService {
       pagePlaces = hits.subList(from, Math.min(from + pageSize, total));
     }
 
+    List<Place> located = pagePlaces.stream()
+        .map(p -> p.distanceMeters() == null ? p.withDistance(distance(lat, lng, p)) : p)
+        .toList();
+    List<RestaurantSummary> items = summaries(userId, located, flagsById, Map.of());
+    boolean personalized = userId != null;
+
+    return new SearchResponse(
+        pageIndex, pageSize, total, personalized, items, UserService.DISCLAIMER);
+  }
+
+  /**
+   * 식당 목록 한 장. 검색과 지역 음식의 "파는 곳"이 같은 모양으로 나가도록 공유한다.
+   *
+   * @param places 거리({@code distanceMeters})가 채워진 식당
+   * @param knownIntros 이미 받아 둔 소개 정보. 없는 것만 새로 부른다
+   */
+  public List<RestaurantSummary> summaries(
+      Long userId, List<Place> places, Map<String, Optional<Intro>> knownIntros) {
+    return summaries(userId, withId(places), loadFlags(ids(withId(places))), knownIntros);
+  }
+
+  private List<RestaurantSummary> summaries(
+      Long userId, List<Place> places, Map<Long, Set<String>> flagsById,
+      Map<String, Optional<Intro>> knownIntros) {
+
     UserHealthProfile profile = profileOf(userId);
     boolean personalized = userId != null;
 
     // 식당별 메뉴를 병렬로 받는다. 못 받은 식당은 결과에서 빠진다.
-    Map<String, Optional<Intro>> intros =
-        tour.intros(pagePlaces.stream().map(Place::contentId).toList());
+    Map<String, Optional<Intro>> intros = new LinkedHashMap<>();
+    List<String> missing = new ArrayList<>();
+    for (Place p : places) {
+      if (knownIntros.containsKey(p.contentId())) {
+        intros.put(p.contentId(), knownIntros.get(p.contentId()));
+      } else {
+        missing.add(p.contentId());
+      }
+    }
+    if (!missing.isEmpty()) {
+      intros.putAll(tour.intros(missing));
+    }
     Map<String, List<MenuRow>> menusById = loadMenuRows(intros);
 
     List<RestaurantSummary> items = new ArrayList<>();
-    for (Place p : pagePlaces) {
+    for (Place p : places) {
       Long id = idOf(p);
-      double meters = p.distanceMeters() == null ? distance(lat, lng, p) : p.distanceMeters();
+      double meters = p.distanceMeters() == null ? 0 : p.distanceMeters();
       List<String> flagList = List.copyOf(flagsById.getOrDefault(id, Set.of()));
 
       Seal seal = null;
@@ -181,9 +216,7 @@ public class RestaurantSearchService {
           (int) Math.round(meters), GeoBox.walkMinutes(meters),
           flagList, seal, summary, p.firstImage()));
     }
-
-    return new SearchResponse(
-        pageIndex, pageSize, total, personalized, items, UserService.DISCLAIMER);
+    return items;
   }
 
   /**
@@ -253,7 +286,8 @@ public class RestaurantSearchService {
     return Integer.toUnsignedLong(rawName.hashCode());
   }
 
-  private UserHealthProfile profileOf(Long userId) {
+  /** 판정에 쓸 사용자 정보. 비로그인이면 빈 프로필. */
+  public UserHealthProfile profileOf(Long userId) {
     if (userId == null) {
       return UserHealthProfile.empty();
     }

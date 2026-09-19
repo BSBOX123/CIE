@@ -26,6 +26,14 @@ public interface TourApi {
    */
   NearbyPage nearby(double lat, double lng, int radiusMeters, int pageNo, int rows);
 
+  /**
+   * 이름에 검색어가 들어간 음식점 (전국). 거리는 채워지지 않는다.
+   *
+   * <p>지역 음식을 파는 곳을 찾는 데 쓴다. 한국 식당은 상호에 파는 음식이 들어가는
+   * 경우가 많다 (예: 청도돼지국밥, 초량밀면).
+   */
+  List<Place> keyword(String keyword, int rows);
+
   /** 식당 기본 정보 (이름·주소·좌표·이미지). 없는 식당이면 비어 있다. */
   Optional<Place> place(String contentId);
 
@@ -49,6 +57,8 @@ public interface TourApi {
    * 식당 기본 정보.
    *
    * @param distanceMeters 반경 조회에서만 채워진다 (API 가 계산해 준다)
+   * @param regionCode 법정동 시도 코드 {@code lDongRegnCd} (예: 26 부산, 48 경남)
+   * @param districtCode 법정동 시군구 코드 {@code lDongSignguCd}
    */
   record Place(
       String contentId,
@@ -57,7 +67,16 @@ public interface TourApi {
       Double lat,
       Double lng,
       Double distanceMeters,
-      String firstImage) {}
+      String firstImage,
+      String regionCode,
+      String districtCode) {
+
+    /** 다른 기준점에서 잰 거리로 바꾼 사본. */
+    public Place withDistance(Double meters) {
+      return new Place(contentId, title, addr1, lat, lng, meters, firstImage,
+          regionCode, districtCode);
+    }
+  }
 
   /** 식당 소개 정보. 메뉴 원문({@code firstmenu}·{@code treatmenu})은 여기에만 있다. */
   record Intro(

@@ -39,8 +39,14 @@ public class FakeTourApi implements TourApi {
 
   /** 식당을 넣는다. @return contentId */
   public String add(String title, double lat, double lng, String addr1) {
+    return add(title, lat, lng, addr1, "51");  // 강원
+  }
+
+  /** 시도 코드({@code lDongRegnCd})까지 지정해 넣는다. @return contentId */
+  public String add(String title, double lat, double lng, String addr1, String regionCode) {
     String contentId = String.valueOf(sequence.incrementAndGet());
-    places.put(contentId, new Place(contentId, title, addr1, lat, lng, null, null));
+    places.put(contentId,
+        new Place(contentId, title, addr1, lat, lng, null, null, regionCode, null));
     return contentId;
   }
 
@@ -64,13 +70,23 @@ public class FakeTourApi implements TourApi {
   public NearbyPage nearby(double lat, double lng, int radiusMeters, int pageNo, int rows) {
     guard();
     List<Place> within = places.values().stream()
-        .map(p -> withDistance(p, GeoBox.distanceMeters(lat, lng, p.lat(), p.lng())))
+        .map(p -> p.withDistance(GeoBox.distanceMeters(lat, lng, p.lat(), p.lng())))
         .filter(p -> p.distanceMeters() <= radiusMeters)
         .sorted(Comparator.comparingDouble(Place::distanceMeters))
         .toList();
     int from = Math.min((pageNo - 1) * rows, within.size());
     int to = Math.min(from + rows, within.size());
     return new NearbyPage(within.subList(from, to), within.size());
+  }
+
+  @Override
+  public List<Place> keyword(String keyword, int rows) {
+    guard();
+    return places.values().stream()
+        .filter(p -> p.title().contains(keyword))
+        .sorted(Comparator.comparing(Place::contentId))
+        .limit(rows)
+        .toList();
   }
 
   @Override
@@ -120,10 +136,5 @@ public class FakeTourApi implements TourApi {
     if (down) {
       throw new TourApiException("관광공사 API 장애");
     }
-  }
-
-  private static Place withDistance(Place p, double meters) {
-    return new Place(p.contentId(), p.title(), p.addr1(), p.lat(), p.lng(), meters,
-        p.firstImage());
   }
 }

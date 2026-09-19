@@ -22,15 +22,16 @@ public class LocalFoodTip {
   @Column(nullable = false, length = 120)
   private String phrase;
 
+  /** V1 에서 SMALLINT 로 만들었다. int 로 두면 운영의 스키마 검증(validate)에서 기동이 실패한다. */
   @Column(name = "sort_order", nullable = false)
-  private int sortOrder;
+  private short sortOrder;
 
   protected LocalFoodTip() {}
 
   public LocalFoodTip(String foodId, String phrase, int sortOrder) {
     this.foodId = foodId;
     this.phrase = phrase;
-    this.sortOrder = sortOrder;
+    this.sortOrder = (short) sortOrder;
   }
 
   public String getFoodId() {

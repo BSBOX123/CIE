@@ -211,9 +211,30 @@ class RestaurantSearchServiceTest {
     }
 
     @Test
-    @DisplayName("상세에서 메뉴를 못 불러오면 빈 메뉴가 아니라 예외다")
+    @DisplayName("상세에서 메뉴만 못 불러오면 가게 정보는 주고 menusUnavailable 로 알린다")
     void detailIntroFailure() {
       tour.failIntro(near);
+
+      var detail = search.detail(null, id(near), null, null);
+
+      assertThat(detail.name()).isEqualTo("가까운집");
+      assertThat(detail.menus()).isEmpty();
+      assertThat(detail.menusUnavailable()).isTrue();
+      assertThat(detail.seal()).isNull();
+    }
+
+    @Test
+    @DisplayName("메뉴가 정말 없는 가게는 menusUnavailable 이 false — 둘을 구분한다")
+    void detailNoMenuIsNotUnavailable() {
+      var detail = search.detail(null, id(near), null, null);
+      assertThat(detail.menus()).isEmpty();
+      assertThat(detail.menusUnavailable()).isFalse();
+    }
+
+    @Test
+    @DisplayName("가게 기본 정보까지 못 받으면 예외 — 보여 줄 것이 없다")
+    void detailPlaceFailure() {
+      tour.down(true);
       assertThatThrownBy(() -> search.detail(null, id(near), null, null))
           .isInstanceOf(TourApiException.class);
     }

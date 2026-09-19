@@ -120,5 +120,13 @@ public final class SearchDtos {
       @Schema(description = "식당 전체 판정 (낙관적). 미태깅이면 null") Seal seal,
       @Schema(description = "false 면 토큰이 없어 판정을 못 한 것") boolean personalized,
       List<MenuView> menus,
+      @Schema(
+              description =
+                  """
+                  true 면 관광공사에서 메뉴를 잠시 불러오지 못한 것이다. 이때 menus 는 빈 배열이고
+                  seal·전화·영업시간도 비어 있지만, **"메뉴 정보가 없는 가게"가 아니다.**
+                  가게 이름·주소·지도는 그대로 보여 주고 메뉴 자리에 "메뉴를 잠시 불러오지 못했어요"를
+                  표시할 것.""")
+          boolean menusUnavailable,
       @Schema(description = "화면에 그대로 노출해야 하는 고지 문구") String disclaimer) {}
 }

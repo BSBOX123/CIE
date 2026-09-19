@@ -19,6 +19,7 @@ import com.meogeodo.tour.TourApi;
 import com.meogeodo.tour.TourApi.Intro;
 import com.meogeodo.tour.TourApi.NearbyPage;
 import com.meogeodo.tour.TourApi.Place;
+import com.meogeodo.tour.TourApiException;
 import com.meogeodo.user.AppUserRepository;
 import com.meogeodo.user.UserService;
 import com.meogeodo.vocabulary.VocabularyService;
@@ -32,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -54,6 +57,8 @@ import org.springframework.web.server.ResponseStatusException;
  */
 @Service
 public class RestaurantSearchService {
+
+  private static final Logger log = LoggerFactory.getLogger(RestaurantSearchService.class);
 
   /** 한 번에 조회할 최대 반경. locationBasedList2 의 상한이기도 하다. */
   static final int MAX_RADIUS_M = 20_000;
@@ -222,14 +227,25 @@ public class RestaurantSearchService {
   /**
    * 식당 상세. 좌표를 주면 거리도 함께 계산한다.
    *
-   * <p>메뉴를 불러오지 못하면 빈 메뉴로 답하지 않고 실패로 알린다({@code 503}).
-   * 빈 메뉴는 "이 식당엔 메뉴 정보가 없다"로 읽힌다.
+   * <p>메뉴를 불러오지 못해도 가게 기본 정보(이름·주소·지도)는 보여 준다. 대신
+   * {@code menusUnavailable=true} 로 알린다 — 빈 메뉴를 "이 식당엔 메뉴 정보가 없다"로
+   * 읽으면 안 되기 때문이다. 예전에는 통째로 503 을 냈는데, 관광공사 일일 한도가
+   * 메뉴 조회(detailIntro2)만 바닥난 날 식당 상세 화면 전체가 열리지 않았다(2026-09-20).
+   * 기본 정보(detailCommon2)까지 못 받으면 보여 줄 것이 없으니 그때는 503 이다.
    */
   public RestaurantDetail detail(Long userId, Long restaurantId, Double lat, Double lng) {
     String contentId = String.valueOf(restaurantId);
     Place p = tour.place(contentId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "식당을 찾을 수 없습니다"));
-    Optional<Intro> intro = tour.intro(contentId);
+    Optional<Intro> intro;
+    boolean menusUnavailable = false;
+    try {
+      intro = tour.intro(contentId);
+    } catch (TourApiException e) {
+      log.warn("식당 {} 메뉴 조회 실패 — 기본 정보만 보냅니다: {}", contentId, e.getMessage());
+      intro = Optional.empty();
+      menusUnavailable = true;
+    }
 
     Integer meters = null;
     Integer walk = null;
@@ -260,7 +276,8 @@ public class RestaurantSearchService {
         info == null ? null : info.restDate(),
         info == null ? null : info.parking(),
         p.firstImage(),
-        List.copyOf(flagSet), seal(verdict), personalized, menus, UserService.DISCLAIMER);
+        List.copyOf(flagSet), seal(verdict), personalized, menus, menusUnavailable,
+        UserService.DISCLAIMER);
   }
 
   // ── 내부 ──────────────────────────────────────────────────────────

@@ -19,9 +19,9 @@ public final class ReportDtos {
    * @param requests 그때 실제로 사용한 요청 문구 (자신의 주문 방법)
    * @param feedback 정해진 피드백 문구 중 고른 것 — flag 도출의 근거
    */
-  @Schema(description = "제보 등록 요청")
+  @Schema(name = "ReportCreateRequest", description = "제보 등록 요청")
   public record CreateRequest(
-      @Schema(description = "어느 식당에 대한 제보인지", example = "1",
+      @Schema(description = "어느 식당에 대한 제보인지 (관광공사 contentid)", example = "623223",
               requiredMode = Schema.RequiredMode.REQUIRED)
           @NotNull
           Long restaurantId,
@@ -51,7 +51,7 @@ public final class ReportDtos {
   @Schema(description = "제보 1건")
   public record ReviewView(
       Long id,
-      @Schema(description = "어느 식당의 제보인지", example = "12") Long restaurantId,
+      @Schema(description = "어느 식당의 제보인지 (관광공사 contentid)", example = "623223") Long restaurantId,
       @Schema(
               description = "식당 이름. '내 기록' 화면에서 어느 가게였는지 보여 주는 데 쓴다",
               example = "초당할머니순두부")
@@ -69,7 +69,7 @@ public final class ReportDtos {
 
   @Schema(description = "식당의 제보 목록")
   public record ReviewListResponse(
-      Long restaurantId,
+      @Schema(description = "식당 id (관광공사 contentid)", example = "623223") Long restaurantId,
       @Schema(description = "제보 수", example = "3") int count,
       List<ReviewView> reviews,
       @Schema(

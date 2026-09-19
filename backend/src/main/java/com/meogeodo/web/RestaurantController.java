@@ -106,7 +106,7 @@ public class RestaurantController {
   @GetMapping("/{id}")
   public RestaurantDetail detail(
       @AuthenticationPrincipal Long userId,
-      @Parameter(description = "식당 id (관광공사 contentid)", example = "2869664")
+      @Parameter(description = "식당 id (관광공사 contentid)", example = "623223")
           @PathVariable Long id,
       @Parameter(description = "현재 위도. 주면 거리를 계산해 준다", example = "37.7519")
           @RequestParam(required = false) Double lat,

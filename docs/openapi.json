@@ -96,7 +96,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/CreateRequest"
+                "$ref" : "#/components/schemas/ReportCreateRequest"
               }
             }
           },
@@ -149,7 +149,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/CreateRequest"
+                "$ref" : "#/components/schemas/OrderCardCreateRequest"
               }
             }
           },
@@ -417,7 +417,7 @@
             "type" : "integer",
             "format" : "int64"
           },
-          "example" : 2869664
+          "example" : 623223
         }, {
           "name" : "lat",
           "in" : "query",
@@ -485,13 +485,13 @@
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
-          "description" : "식당 id",
+          "description" : "식당 id (관광공사 contentid)",
           "required" : true,
           "schema" : {
             "type" : "integer",
             "format" : "int64"
           },
-          "example" : 1
+          "example" : 623223
         } ],
         "responses" : {
           "200" : {
@@ -920,15 +920,15 @@
           }
         }
       },
-      "CreateRequest" : {
+      "ReportCreateRequest" : {
         "type" : "object",
         "description" : "제보 등록 요청",
         "properties" : {
           "restaurantId" : {
             "type" : "integer",
             "format" : "int64",
-            "description" : "어느 식당에 대한 제보인지",
-            "example" : 1
+            "description" : "어느 식당에 대한 제보인지 (관광공사 contentid)",
+            "example" : 623223
           },
           "ok" : {
             "type" : "boolean",
@@ -974,8 +974,8 @@
           "restaurantId" : {
             "type" : "integer",
             "format" : "int64",
-            "description" : "어느 식당의 제보인지",
-            "example" : 12
+            "description" : "어느 식당의 제보인지 (관광공사 contentid)",
+            "example" : 623223
           },
           "restaurantName" : {
             "type" : "string",
@@ -1025,6 +1025,34 @@
             "items" : {
               "type" : "string"
             }
+          }
+        }
+      },
+      "OrderCardCreateRequest" : {
+        "type" : "object",
+        "description" : "카드 생성 요청",
+        "properties" : {
+          "restaurantId" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "어느 식당에서 쓸 카드인지 (관광공사 contentid)",
+            "example" : 623223
+          },
+          "menuId" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "어떤 메뉴를 주문할지. 식당 상세의 menus[].id 를 그대로",
+            "example" : 2643297723
+          },
+          "requests" : {
+            "type" : "array",
+            "description" : "카드에 넣을 요청 문구. **보내지 않으면** 서버가 메뉴 판정과 사용자 상용 문구로\n채운다. 보내면 그것을 그대로 쓴다 — 사용자가 화면에서 고른 결과이기 때문이다.",
+            "example" : [ "국물은 따로 주세요", "고춧가루 빼주세요" ],
+            "items" : {
+              "type" : "string"
+            },
+            "maxItems" : 20,
+            "minItems" : 0
           }
         }
       },
@@ -1252,7 +1280,7 @@
             "type" : "integer",
             "format" : "int64",
             "description" : "식당 id (관광공사 contentid)",
-            "example" : 2869664
+            "example" : 623223
           },
           "name" : {
             "type" : "string",
@@ -1472,7 +1500,7 @@
             "type" : "integer",
             "format" : "int64",
             "description" : "식당 id (관광공사 contentid)",
-            "example" : 2869664
+            "example" : 623223
           },
           "name" : {
             "type" : "string",
@@ -1546,7 +1574,9 @@
         "properties" : {
           "restaurantId" : {
             "type" : "integer",
-            "format" : "int64"
+            "format" : "int64",
+            "description" : "식당 id (관광공사 contentid)",
+            "example" : 623223
           },
           "count" : {
             "type" : "integer",

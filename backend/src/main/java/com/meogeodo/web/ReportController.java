@@ -79,7 +79,7 @@ public class ReportController {
   @GetMapping("/api/restaurants/{id}/reports")
   public ReviewListResponse forRestaurant(
       @AuthenticationPrincipal Long userId,
-      @Parameter(description = "식당 id", example = "1") @PathVariable Long id) {
+      @Parameter(description = "식당 id (관광공사 contentid)", example = "623223") @PathVariable Long id) {
     return reports.listForRestaurant(userId, id);
   }
 

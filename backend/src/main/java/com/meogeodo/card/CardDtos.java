@@ -16,10 +16,13 @@ public final class CardDtos {
    * <p>{@code requests} 를 보내지 않으면 서버가 메뉴 판정과 사용자 상용 문구로
    * 채운다. 보내면 그것을 그대로 쓴다 — 사용자가 화면에서 고른 결과다.
    */
-  @Schema(description = "카드 생성 요청")
+  // 이름을 따로 준다. 제보의 CreateRequest 와 이름이 같아 문서에서 한쪽 스키마가 덮여 있었다.
+  @Schema(name = "OrderCardCreateRequest", description = "카드 생성 요청")
   public record CreateRequest(
-      @Schema(description = "어느 식당에서 쓸 카드인지", example = "1") Long restaurantId,
-      @Schema(description = "어떤 메뉴를 주문할지", example = "10") Long menuId,
+      @Schema(description = "어느 식당에서 쓸 카드인지 (관광공사 contentid)", example = "623223")
+          Long restaurantId,
+      @Schema(description = "어떤 메뉴를 주문할지. 식당 상세의 menus[].id 를 그대로", example = "2643297723")
+          Long menuId,
       @Schema(
               description =
                   """

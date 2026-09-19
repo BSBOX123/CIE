@@ -73,7 +73,7 @@ public final class SearchDtos {
 
   @Schema(description = "검색 결과의 식당 1건. 판정은 낙관적이다 — 안전한 메뉴가 하나라도 있으면 OK")
   public record RestaurantSummary(
-      @Schema(description = "식당 id (관광공사 contentid)", example = "2869664") Long id,
+      @Schema(description = "식당 id (관광공사 contentid)", example = "623223") Long id,
       @Schema(example = "초당할머니순두부") String name,
       @Schema(description = "주소·업종 등 한 줄 요약") String meta,
       BigDecimal lat,
@@ -104,7 +104,7 @@ public final class SearchDtos {
 
   @Schema(description = "식당 상세. 메뉴별 판정까지 포함한다")
   public record RestaurantDetail(
-      @Schema(description = "식당 id (관광공사 contentid)", example = "2869664") Long id,
+      @Schema(description = "식당 id (관광공사 contentid)", example = "623223") Long id,
       @Schema(example = "초당할머니순두부") String name,
       @Schema(description = "주소·업종 등 한 줄 요약") String meta,
       BigDecimal lat,

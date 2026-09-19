@@ -25,6 +25,9 @@ public class TaggingScheduler {
 
   public TaggingScheduler(TaggingService tagging) {
     this.tagging = tagging;
+    // 배치가 켜졌는지 기동 로그로 남긴다. 조건이 안 맞아 빈이 아예 안 만들어지면
+    // 아무 로그도 없이 큐가 영영 줄지 않는데, 에러가 나지 않아 알아채기 어렵다.
+    log.info("태깅 배치 활성화됨 (meogeodo.tagging.scheduled=true)");
   }
 
   /**
@@ -34,13 +37,12 @@ public class TaggingScheduler {
    * 지난다. 실제 한도를 확인한 뒤 {@code meogeodo.tagging.chunk-size} 와 함께
    * 조정한다.
    */
-  @Scheduled(fixedDelayString = "PT30M", initialDelayString = "PT1M")
+  @Scheduled(fixedDelay = 30 * 60 * 1000L, initialDelay = 60 * 1000L)
   public void tag() {
+    log.info("태깅 배치 시작");
     try {
       int tagged = tagging.tagPending();
-      if (tagged > 0) {
-        log.info("태깅 {}건 완료", tagged);
-      }
+      log.info("태깅 배치 끝 — {}건 처리", tagged);
     } catch (RuntimeException e) {
       log.error("태깅 실행 실패", e);
     }

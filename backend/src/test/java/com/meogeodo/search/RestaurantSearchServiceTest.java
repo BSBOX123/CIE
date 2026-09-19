@@ -1,15 +1,17 @@
 package com.meogeodo.search;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.meogeodo.domain.Dish;
 import com.meogeodo.domain.DishRepository;
 import com.meogeodo.domain.DishTag;
 import com.meogeodo.domain.DishTagRepository;
-import com.meogeodo.domain.Menu;
-import com.meogeodo.domain.MenuRepository;
-import com.meogeodo.domain.Restaurant;
-import com.meogeodo.domain.RestaurantRepository;
+import com.meogeodo.domain.RestaurantFlag;
+import com.meogeodo.domain.RestaurantFlagRepository;
+import com.meogeodo.tour.FakeTourApi;
+import com.meogeodo.tour.MenuTextParser;
+import com.meogeodo.tour.TourApiException;
 import com.meogeodo.user.UserService;
 import com.meogeodo.web.AuthDtos.SignupRequest;
 import jakarta.persistence.EntityManager;
@@ -25,11 +27,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * GPS 반경 검색 테스트 (MVP 2번).
  *
- * <p>좌표는 강릉 실제 데이터에서 가져왔다.
+ * <p>식당·메뉴는 관광공사에서 실시간으로 받으므로 {@link FakeTourApi} 에 넣는다.
+ * 음식 분석(dish·dish_tag)만 DB 에 있다. 좌표는 강릉 실제 데이터에서 가져왔다.
  */
 @SpringBootTest
 @ActiveProfiles("test")
@@ -40,39 +44,36 @@ class RestaurantSearchServiceTest {
   private static final double LAT = 37.7952, LNG = 128.8964;
 
   @Autowired private RestaurantSearchService search;
-  @Autowired private RestaurantRepository restaurants;
-  @Autowired private MenuRepository menus;
+  @Autowired private FakeTourApi tour;
+  @Autowired private MenuTextParser parser;
   @Autowired private DishRepository dishes;
   @Autowired private DishTagRepository dishTags;
+  @Autowired private RestaurantFlagRepository flags;
   @Autowired private UserService userService;
   @Autowired private EntityManager em;
 
-  private Restaurant near;
-  private Restaurant far;
+  private String near;
+  private String far;
 
   @BeforeEach
   void setUp() {
-    near = restaurant("가까운집", 37.7960, 128.8970);   // 약 100m
-    far = restaurant("먼집", 37.8500, 128.9500);         // 약 8km
+    tour.reset();
+    near = tour.add("가까운집", 37.7960, 128.8970, "강원특별자치도 강릉시 경포동 1");  // 약 100m
+    far = tour.add("먼집", 37.8500, 128.9500, "강원특별자치도 강릉시 사천면 2");       // 약 8km
   }
 
-  private Restaurant restaurant(String name, double lat, double lng) {
-    Restaurant r = new Restaurant("c-" + name, name);
-    r.setLat(BigDecimal.valueOf(lat));
-    r.setLng(BigDecimal.valueOf(lng));
-    r.setArea("강릉 경포동");
-    return restaurants.save(r);
+  private long id(String contentId) {
+    return Long.parseLong(contentId);
   }
 
-  /** 태깅된 메뉴를 붙인다. */
-  private void menu(Restaurant r, String name, Set<String> cares,
+  /** 음식 사전에 분석 결과를 넣는다. 메뉴 원문은 따로 {@code tour.menu} 로 넣는다. */
+  private void analyzed(String menuName, Set<String> cares,
       Set<String> mainAllergens, Set<String> traceAllergens) {
-    Dish dish = dishes.save(new Dish(name + "-" + r.getId()));
+    String normalized = parser.normalize(menuName);
+    Dish dish = dishes.findByNormalizedName(normalized)
+        .orElseGet(() -> dishes.save(new Dish(normalized)));
     dish.setTaggedAt(OffsetDateTime.now());
     dishes.save(dish);
-    Menu m = new Menu(r, name, true);
-    m.setDish(dish);
-    menus.save(m);
 
     cares.forEach(c -> dishTags.save(
         new DishTag(dish, DishTag.TagType.CARE, c, DishTag.Source.NUTRITION_DB, BigDecimal.ONE)));
@@ -91,6 +92,13 @@ class RestaurantSearchServiceTest {
     em.flush();
   }
 
+  /** 분석된 메뉴 하나를 가진 식당. */
+  private void menu(String contentId, String menuName, Set<String> cares,
+      Set<String> mainAllergens, Set<String> traceAllergens) {
+    analyzed(menuName, cares, mainAllergens, traceAllergens);
+    tour.menu(contentId, menuName, null);
+  }
+
   private Long signup(String loginId, Set<String> diseases, Set<String> allergies) {
     return userService.signup(new SignupRequest(
         loginId, "secret123", "김영수", "남성", 1958, "A형",
@@ -102,48 +110,20 @@ class RestaurantSearchServiceTest {
   class Radius {
 
     @Test
-    @DisplayName("반경 안의 식당만 나온다")
-    void withinRadius() {
+    @DisplayName("식당 id 는 관광공사 contentid 다 — 저장하지 않으므로 다시 찾을 열쇠가 이것뿐이다")
+    void idIsContentId() {
       var result = search.search(null, LAT, LNG, 2_000, null, null, 0, 10);
-
-      assertThat(result.items()).extracting(SearchDtos.RestaurantSummary::name)
-          .containsExactly("가까운집");
+      assertThat(result.items()).extracting(SearchDtos.RestaurantSummary::id)
+          .containsExactly(id(near));
     }
 
     @Test
-    @DisplayName("반경을 넓히면 먼 곳도 포함된다")
-    void widerRadius() {
-      var result = search.search(null, LAT, LNG, 20_000, null, null, 0, 10);
-      assertThat(result.items()).hasSize(2);
-    }
-
-    @Test
-    @DisplayName("거리순으로 정렬된다")
-    void sortedByDistance() {
-      var result = search.search(null, LAT, LNG, 20_000, null, null, 0, 10);
-      assertThat(result.items()).extracting(SearchDtos.RestaurantSummary::distanceM)
-          .isSorted();
-    }
-
-    @Test
-    @DisplayName("거리와 도보 시간을 함께 준다")
+    @DisplayName("거리와 도보 시간, 줄인 주소를 함께 준다")
     void distanceAndWalk() {
       var item = search.search(null, LAT, LNG, 2_000, null, null, 0, 10).items().get(0);
       assertThat(item.distanceM()).isBetween(1, 300);
       assertThat(item.walkMinutes()).isGreaterThanOrEqualTo(1);
-      assertThat(item.meta()).contains("강릉 경포동").contains("도보");
-    }
-
-    @Test
-    @DisplayName("좌표가 없는 식당은 제외한다 — 지도에 찍을 수 없다")
-    void skipsMissingCoordinates() {
-      Restaurant noCoords = new Restaurant("c-noloc", "좌표없는집");
-      restaurants.save(noCoords);
-      em.flush();
-
-      var result = search.search(null, LAT, LNG, 20_000, null, null, 0, 10);
-      assertThat(result.items()).extracting(SearchDtos.RestaurantSummary::name)
-          .doesNotContain("좌표없는집");
+      assertThat(item.meta()).isEqualTo("강릉시 경포동 · 도보 " + item.walkMinutes() + "분");
     }
 
     @Test
@@ -152,20 +132,98 @@ class RestaurantSearchServiceTest {
       var result = search.search(null, LAT, LNG, 20_000, "먼", null, 0, 10);
       assertThat(result.items()).extracting(SearchDtos.RestaurantSummary::name)
           .containsExactly("먼집");
+      assertThat(result.totalCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("제보로 도출된 속성으로 거를 수 있다")
+    void filterByFlag() {
+      flags.save(new RestaurantFlag(id(far), "덜짜게 해줌", RestaurantFlag.Source.COMMUNITY));
+      em.flush();
+
+      var result = search.search(null, LAT, LNG, 20_000, null, List.of("덜짜게 해줌"), 0, 10);
+
+      assertThat(result.items()).extracting(SearchDtos.RestaurantSummary::name)
+          .containsExactly("먼집");
+      assertThat(result.items().get(0).flags()).containsExactly("덜짜게 해줌");
     }
 
     @Test
     @DisplayName("페이지 기본 크기는 3 (프론트 PER_PAGE)")
     void defaultPageSize() {
       for (int i = 0; i < 5; i++) {
-        restaurant("집" + i, 37.7955 + i * 0.0001, 128.8965);
+        tour.add("집" + i, 37.7955 + i * 0.0001, 128.8965, "강원특별자치도 강릉시 경포동");
       }
-      em.flush();
 
       var result = search.search(null, LAT, LNG, 2_000, null, null, 0, 0);
       assertThat(result.size()).isEqualTo(3);
       assertThat(result.items()).hasSize(3);
-      assertThat(result.totalCount()).isGreaterThan(3);
+      assertThat(result.totalCount()).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("다음 페이지는 이어서 나온다")
+    void secondPage() {
+      for (int i = 0; i < 5; i++) {
+        tour.add("집" + i, 37.7955 + i * 0.0001, 128.8965, "강원특별자치도 강릉시 경포동");
+      }
+      var first = search.search(null, LAT, LNG, 2_000, null, null, 0, 3).items();
+      var second = search.search(null, LAT, LNG, 2_000, null, null, 1, 3).items();
+
+      assertThat(second).hasSize(3);
+      assertThat(second).extracting(SearchDtos.RestaurantSummary::id)
+          .doesNotContainAnyElementsOf(
+              first.stream().map(SearchDtos.RestaurantSummary::id).toList());
+    }
+  }
+
+  @Nested
+  @DisplayName("관광공사 실패 — 빈 결과로 바꾸지 않는다")
+  class Failure {
+
+    @Test
+    @DisplayName("API 가 죽으면 예외로 알린다 — '근처에 식당이 없다'로 답하지 않는다")
+    void apiDownIsAnError() {
+      tour.down(true);
+      assertThatThrownBy(() -> search.search(null, LAT, LNG, 2_000, null, null, 0, 10))
+          .isInstanceOf(TourApiException.class);
+    }
+
+    @Test
+    @DisplayName("한 식당의 메뉴만 못 불러오면 그 식당만 '불러오지 못함'으로 표시한다")
+    void introFailureIsNotNoMenu() {
+      // 적재 시절의 사고: 한도 초과 응답이 '메뉴 없음'으로 저장돼 식당 86% 가 비었다.
+      menu(near, "물회", Set.of(), Set.of("새우"), Set.of());
+      tour.failIntro(near);
+      Long userId = signup("fail1", Set.of(), Set.of("새우"));
+
+      var item = search.search(userId, LAT, LNG, 2_000, null, null, 0, 10).items().get(0);
+
+      assertThat(item.seal()).isNull();
+      assertThat(item.summary()).isEqualTo(RestaurantSearchService.INTRO_FAILED);
+    }
+
+    @Test
+    @DisplayName("메뉴가 정말 없는 식당은 '메뉴 정보가 없습니다'")
+    void noMenu() {
+      var item = search.search(null, LAT, LNG, 2_000, null, null, 0, 10).items().get(0);
+      assertThat(item.summary()).isEqualTo(RestaurantSearchService.NO_MENU);
+    }
+
+    @Test
+    @DisplayName("상세에서 메뉴를 못 불러오면 빈 메뉴가 아니라 예외다")
+    void detailIntroFailure() {
+      tour.failIntro(near);
+      assertThatThrownBy(() -> search.detail(null, id(near), null, null))
+          .isInstanceOf(TourApiException.class);
+    }
+
+    @Test
+    @DisplayName("없는 식당은 404")
+    void unknownRestaurant() {
+      assertThatThrownBy(() -> search.detail(null, 999L, null, null))
+          .isInstanceOf(ResponseStatusException.class)
+          .hasMessageContaining("찾을 수 없습니다");
     }
   }
 
@@ -210,6 +268,20 @@ class RestaurantSearchServiceTest {
       assertThat(search.search(none, LAT, LNG, 2_000, null, null, 0, 10)
           .items().get(0).seal().verdict()).isEqualTo("OK");
     }
+
+    @Test
+    @DisplayName("같은 음식은 어느 식당에서나 같은 판정 — 이름을 정규화해 사전을 찾는다")
+    void normalizedLookup() {
+      analyzed("김치찌개", Set.of("나트륨"), Set.of(), Set.of());
+      tour.menu(near, "김치 찌게 등", null);  // 띄어쓰기·오기·'등'
+      Long userId = signup("u8", Set.of("고혈압"), Set.of());
+
+      var m = search.detail(userId, id(near), null, null).menus().get(0);
+
+      assertThat(m.name()).isEqualTo("김치 찌게");
+      assertThat(m.tagStatus()).isEqualTo("TAGGED");
+      assertThat(m.hitCares()).containsExactly("나트륨");
+    }
   }
 
   @Nested
@@ -222,7 +294,7 @@ class RestaurantSearchServiceTest {
       menu(near, "순두부백반", Set.of("나트륨"), Set.of(), Set.of("대두"));
       Long userId = signup("u4", Set.of("고혈압"), Set.of("대두"));
 
-      var detail = search.detail(userId, near.getId(), LAT, LNG);
+      var detail = search.detail(userId, id(near), LAT, LNG);
       var m = detail.menus().get(0);
 
       // 대두가 양념에 있으므로 RED 가 아니라 INK
@@ -239,33 +311,42 @@ class RestaurantSearchServiceTest {
       menu(near, "물회", Set.of(), Set.of("새우"), Set.of());
       Long userId = signup("u5", Set.of(), Set.of("새우"));
 
-      var m = search.detail(userId, near.getId(), null, null).menus().get(0);
+      var m = search.detail(userId, id(near), null, null).menus().get(0);
 
       assertThat(m.seal().verdict()).isEqualTo("RED");
       assertThat(m.detail()).contains("주재료").contains("다른 메뉴");
     }
 
     @Test
-    @DisplayName("아직 태깅되지 않은 메뉴는 PENDING — 판정하지 않는다")
-    void pendingMenu() {
-      Dish untagged = dishes.save(new Dish("미분석음식"));
-      Menu m = new Menu(near, "미분석메뉴", true);
-      m.setDish(untagged);
-      menus.save(m);
-      em.flush();
+    @DisplayName("관광공사 소개 정보(전화·영업시간)를 함께 준다")
+    void introFields() {
+      tour.menu(near, "물회", null);
+      var detail = search.detail(null, id(near), null, null);
 
-      Long userId = signup("u6", Set.of("당뇨"), Set.of());
-      var view = search.detail(userId, near.getId(), null, null).menus().get(0);
+      assertThat(detail.name()).isEqualTo("가까운집");
+      assertThat(detail.tel()).isEqualTo("033-000-0000");
+      assertThat(detail.openTime()).isEqualTo("10:00~21:00");
+    }
 
-      assertThat(view.tagStatus()).isEqualTo("PENDING");
-      assertThat(view.seal()).isNull();
-      assertThat(view.detail()).contains("아직 분석");
+    @Test
+    @DisplayName("메뉴 id 는 이름에서 만든 값이라 다시 불러도 같다")
+    void stableMenuId() {
+      tour.menu(near, "물회, 회덮밥", null);
+
+      var first = search.detail(null, id(near), null, null).menus();
+      var again = search.detail(null, id(near), null, null).menus();
+
+      assertThat(first).extracting(SearchDtos.MenuView::id)
+          .containsExactlyElementsOf(again.stream().map(SearchDtos.MenuView::id).toList())
+          .doesNotHaveDuplicates();
+      assertThat(first.get(0).representative()).isTrue();
+      assertThat(first.get(1).representative()).isFalse();
     }
 
     @Test
     @DisplayName("좌표를 안 주면 거리는 비어 있다")
     void detailWithoutCoordinates() {
-      var detail = search.detail(null, near.getId(), null, null);
+      var detail = search.detail(null, id(near), null, null);
       assertThat(detail.distanceM()).isNull();
       assertThat(detail.walkMinutes()).isNull();
     }
@@ -276,14 +357,14 @@ class RestaurantSearchServiceTest {
       menu(near, "김치찌개", Set.of("나트륨"), Set.of(), Set.of());
       Long userId = signup("u7", Set.of("고혈압"), Set.of());
 
-      var m = search.detail(userId, near.getId(), null, null).menus().get(0);
+      var m = search.detail(userId, id(near), null, null).menus().get(0);
       assertThat(m.detail()).contains("국물");
     }
 
     @Test
     @DisplayName("면책 문구가 붙는다 (SPEC 11.1)")
     void disclaimer() {
-      assertThat(search.detail(null, near.getId(), null, null).disclaimer())
+      assertThat(search.detail(null, id(near), null, null).disclaimer())
           .contains("의학적 조언이 아닙니다");
     }
   }
@@ -321,19 +402,43 @@ class RestaurantSearchServiceTest {
       assertThat(RestaurantSearchService.fitsMenu("국물은 따로 담아 주세요", "불고기버거")).isTrue();
       assertThat(RestaurantSearchService.josa("고등어")).isEqualTo("고등어는");
     }
+
+    @Test
+    @DisplayName("주소는 시군구·읍면동만 남긴다")
+    void shortenAddress() {
+      assertThat(RestaurantSearchService.shortenAddress("강원특별자치도 강릉시 초당동 123"))
+          .isEqualTo("강릉시 초당동");
+      assertThat(RestaurantSearchService.shortenAddress(null)).isEmpty();
+    }
   }
 
   @Nested
   @DisplayName("미태깅 메뉴 — 안전하다고 답하지 않는다")
   class Untagged {
 
-    /** 태깅 전 메뉴만 있는 식당. */
-    private void untaggedMenu(Restaurant r, String name) {
-      Dish d = dishes.save(new Dish(name + "-" + r.getId()));  // tagged_at 없음
-      Menu m = new Menu(r, name, true);
-      m.setDish(d);
-      menus.save(m);
-      em.flush();
+    @Test
+    @DisplayName("사전에 없는 메뉴는 이름만 등록되어 태깅을 기다린다")
+    void unknownDishIsQueued() {
+      tour.menu(near, "처음보는메뉴", null);
+
+      var view = search.detail(null, id(near), null, null).menus().get(0);
+
+      assertThat(view.tagStatus()).isEqualTo("PENDING");
+      assertThat(dishes.findByNormalizedName("처음보는메뉴"))
+          .hasValueSatisfying(d -> assertThat(d.isTagged()).isFalse());
+    }
+
+    @Test
+    @DisplayName("아직 태깅되지 않은 메뉴는 PENDING — 판정하지 않는다")
+    void pendingMenu() {
+      tour.menu(near, "미분석메뉴", null);
+      Long userId = signup("u6", Set.of("당뇨"), Set.of());
+
+      var view = search.detail(userId, id(near), null, null).menus().get(0);
+
+      assertThat(view.tagStatus()).isEqualTo("PENDING");
+      assertThat(view.seal()).isNull();
+      assertThat(view.detail()).contains("아직 분석");
     }
 
     @Test
@@ -341,7 +446,7 @@ class RestaurantSearchServiceTest {
     void allUntaggedMeansNoVerdict() {
       // 실제로 겪은 문제: 태깅 전 강릉 식당 10곳이 전부 ○ '조절 불필요' 로 나왔다.
       // 태그가 없는 것과 '걸리는 게 없는' 것은 다르다.
-      untaggedMenu(near, "미분석메뉴");
+      tour.menu(near, "미분석메뉴", null);
       Long userId = signup("un1", Set.of("고혈압"), Set.of("새우"));
 
       var result = search.search(userId, LAT, LNG, 2_000, null, null, 0, 10);
@@ -352,8 +457,8 @@ class RestaurantSearchServiceTest {
     @Test
     @DisplayName("태깅된 메뉴가 하나라도 있으면 그것만으로 판정한다")
     void judgesOnTaggedOnly() {
-      untaggedMenu(near, "미분석메뉴");
-      menu(near, "물회", Set.of(), Set.of("새우"), Set.of());
+      analyzed("물회", Set.of(), Set.of("새우"), Set.of());
+      tour.menu(near, "미분석메뉴, 물회", null);
       Long userId = signup("un2", Set.of(), Set.of("새우"));
 
       var result = search.search(userId, LAT, LNG, 2_000, null, null, 0, 10);
@@ -365,11 +470,11 @@ class RestaurantSearchServiceTest {
     @Test
     @DisplayName("상세에서도 미태깅 메뉴는 식당 판정에 끼지 않는다")
     void detailExcludesUntagged() {
-      untaggedMenu(near, "미분석메뉴");
-      menu(near, "물회", Set.of(), Set.of("새우"), Set.of());
+      analyzed("물회", Set.of(), Set.of("새우"), Set.of());
+      tour.menu(near, "미분석메뉴, 물회", null);
       Long userId = signup("un3", Set.of(), Set.of("새우"));
 
-      var detail = search.detail(userId, near.getId(), null, null);
+      var detail = search.detail(userId, id(near), null, null);
 
       assertThat(detail.seal().verdict()).isEqualTo("RED");
       assertThat(detail.menus()).hasSize(2);

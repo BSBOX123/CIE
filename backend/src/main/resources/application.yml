@@ -41,16 +41,16 @@ meogeodo:
     # 이미 URL 인코딩된 키다. 재인코딩하면 인증이 깨진다 (SPEC 6.2).
     api-key: ${PUBLIC_DATA_API_KEY:}
     kor-service-base-url: https://apis.data.go.kr/B551011/KorService2
+    # 서버 전체에서 관광공사로 동시에 나가는 호출 수. 실측으로 5 는 안정적이었고
+    # 10 에서 초당 한도(코드 23)에 걸렸다.
+    max-concurrent: ${KOR_SERVICE_MAX_CONCURRENT:5}
   ai-service:
     base-url: ${AI_SERVICE_URL:http://localhost:8000}
   openapi:
     # Swagger UI 의 Servers 목록에 뜨는 배포 주소. 예: https://api.example.com
     # 비우면 문서를 연 주소에서 추론한다.
     server-url: ${PUBLIC_BASE_URL:}
-  # 배치는 명시적으로 켤 때만 돈다. 개발 중 실수로 전국 수집이 돌거나
-  # LLM 배치가 제출되는 것을 막는다.
-  ingest:
-    scheduled: ${INGEST_SCHEDULED:false}
+  # 배치는 명시적으로 켤 때만 돈다. 개발 중 실수로 LLM 배치가 제출되는 것을 막는다.
   tagging:
     scheduled: ${TAGGING_SCHEDULED:false}
     # 한 번에 처리할 음식 수. 무료 티어의 일일 요청 한도를 넘지 않게 잡는다.

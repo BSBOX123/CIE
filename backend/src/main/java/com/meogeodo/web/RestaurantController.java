@@ -35,6 +35,10 @@ import org.springframework.web.bind.annotation.RestController;
         """
         GPS 반경 검색과 식당 상세.
 
+        식당·메뉴는 요청마다 **한국관광공사 API 에서 실시간으로** 받는다. 식당 `id` 는
+        관광공사 `contentid` 다. 관광공사를 불러오지 못하면 빈 결과가 아니라 `503`
+        (`TOUR_API_UNAVAILABLE`) 으로 답한다 — "근처에 식당이 없다"와 구분할 것.
+
         **토큰은 선택이다.** 없으면 목록만 나오고 판정(`seal`)은 비어 있으며
         `personalized=false` 로 알린다. 있으면 같은 경로가 사용자 기준 판정을 함께 준다.
         Swagger UI 에서 판정을 보려면 위쪽 Authorize 로 토큰을 넣고 호출할 것.""")
@@ -60,7 +64,8 @@ public class RestaurantController {
           배지를 그리지 말 것.""")
   @ApiResponses({
     @ApiResponse(responseCode = "200", description = "검색됨. 결과가 없으면 items 가 빈 배열"),
-    @ApiResponse(responseCode = "400", description = "좌표 범위를 벗어남")
+    @ApiResponse(responseCode = "400", description = "좌표 범위를 벗어남"),
+    @ApiResponse(responseCode = "503", description = "관광공사 API 를 잠시 불러오지 못함. 잠시 후 다시 시도")
   })
   @GetMapping
   public SearchResponse search(
@@ -95,12 +100,14 @@ public class RestaurantController {
           좌표(`lat`,`lng`)를 함께 주면 거리·도보 시간도 채워 준다. 안 주면 `null`.""")
   @ApiResponses({
     @ApiResponse(responseCode = "200", description = "조회됨"),
-    @ApiResponse(responseCode = "404", description = "그런 식당이 없음")
+    @ApiResponse(responseCode = "404", description = "그런 식당이 없음"),
+    @ApiResponse(responseCode = "503", description = "관광공사 API 를 잠시 불러오지 못함. 잠시 후 다시 시도")
   })
   @GetMapping("/{id}")
   public RestaurantDetail detail(
       @AuthenticationPrincipal Long userId,
-      @Parameter(description = "식당 id", example = "1") @PathVariable Long id,
+      @Parameter(description = "식당 id (관광공사 contentid)", example = "2869664")
+          @PathVariable Long id,
       @Parameter(description = "현재 위도. 주면 거리를 계산해 준다", example = "37.7519")
           @RequestParam(required = false) Double lat,
       @Parameter(description = "현재 경도", example = "128.8761") @RequestParam(required = false)

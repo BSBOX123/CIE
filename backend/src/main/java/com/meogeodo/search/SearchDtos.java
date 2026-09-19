@@ -40,7 +40,11 @@ public final class SearchDtos {
 
   @Schema(description = "메뉴 1건. 판정은 비관적이다 — 하나라도 걸리면 위험한 쪽으로 본다")
   public record MenuView(
-      Long id,
+      @Schema(
+              description =
+                  "메뉴 id. 메뉴는 저장하지 않으므로 메뉴 이름에서 만든 값이다. 같은 식당의 같은 메뉴는"
+                      + " 언제 불러도 같으니 주문요청카드의 menuId 로 그대로 보낼 것")
+          Long id,
       @Schema(example = "초당순두부") String name,
       @Schema(
               description =
@@ -69,7 +73,7 @@ public final class SearchDtos {
 
   @Schema(description = "검색 결과의 식당 1건. 판정은 낙관적이다 — 안전한 메뉴가 하나라도 있으면 OK")
   public record RestaurantSummary(
-      Long id,
+      @Schema(description = "식당 id (관광공사 contentid)", example = "2869664") Long id,
       @Schema(example = "초당할머니순두부") String name,
       @Schema(description = "주소·업종 등 한 줄 요약") String meta,
       BigDecimal lat,
@@ -79,7 +83,11 @@ public final class SearchDtos {
       @Schema(description = "제보 2건 이상으로 도출된 속성", example = "[\"덜짜게 해줌\"]")
           List<String> flags,
       @Schema(description = "비로그인이거나 메뉴가 전부 미태깅이면 null") Seal seal,
-      @Schema(description = "판정 근거 한 줄 요약") String summary,
+      @Schema(
+              description =
+                  "판정 근거 한 줄 요약. 메뉴가 없으면 \"메뉴 정보가 없습니다\", 이 식당의 메뉴만"
+                      + " 못 불러왔으면 \"메뉴 정보를 잠시 불러오지 못했습니다\"")
+          String summary,
       @Schema(description = "대표 이미지 URL") String firstImage) {}
 
   @Schema(description = "검색 결과")
@@ -96,7 +104,7 @@ public final class SearchDtos {
 
   @Schema(description = "식당 상세. 메뉴별 판정까지 포함한다")
   public record RestaurantDetail(
-      Long id,
+      @Schema(description = "식당 id (관광공사 contentid)", example = "2869664") Long id,
       @Schema(example = "초당할머니순두부") String name,
       @Schema(description = "주소·업종 등 한 줄 요약") String meta,
       BigDecimal lat,

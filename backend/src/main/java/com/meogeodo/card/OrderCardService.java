@@ -5,14 +5,12 @@ import com.meogeodo.card.CardDtos.CardResponse;
 import com.meogeodo.card.CardDtos.CreateRequest;
 import com.meogeodo.card.CardDtos.PolishResponse;
 import com.meogeodo.card.CardDtos.PolishedPhrase;
-import com.meogeodo.domain.Menu;
-import com.meogeodo.domain.MenuRepository;
 import com.meogeodo.domain.OrderCard;
 import com.meogeodo.domain.OrderCardRepository;
-import com.meogeodo.domain.Restaurant;
-import com.meogeodo.domain.RestaurantRepository;
 import com.meogeodo.search.RestaurantSearchService;
 import com.meogeodo.search.SearchDtos.MenuView;
+import com.meogeodo.search.SearchDtos.RestaurantDetail;
+import com.meogeodo.tour.TourApiException;
 import com.meogeodo.user.AppUser;
 import com.meogeodo.user.AppUserRepository;
 import com.meogeodo.user.UserService;
@@ -45,22 +43,16 @@ public class OrderCardService {
 
   private final OrderCardRepository cards;
   private final AppUserRepository users;
-  private final RestaurantRepository restaurants;
-  private final MenuRepository menus;
   private final RestaurantSearchService search;
   private final CardPolishClient polisher;
 
   public OrderCardService(
       OrderCardRepository cards,
       AppUserRepository users,
-      RestaurantRepository restaurants,
-      MenuRepository menus,
       RestaurantSearchService search,
       CardPolishClient polisher) {
     this.cards = cards;
     this.users = users;
-    this.restaurants = restaurants;
-    this.menus = menus;
     this.search = search;
     this.polisher = polisher;
   }
@@ -69,21 +61,24 @@ public class OrderCardService {
   public CardResponse create(Long userId, CreateRequest request) {
     AppUser user = requireUser(userId);
 
-    Restaurant restaurant = request.restaurantId() == null
+    // 식당·메뉴는 저장하지 않으므로 관광공사에서 다시 받아 메뉴 id 로 찾는다.
+    // 상세 화면과 같은 경로라 판정·제안 문구도 화면에서 본 것과 같다.
+    RestaurantDetail restaurant = findRestaurant(userId, request.restaurantId());
+    MenuView menu = restaurant == null || request.menuId() == null
         ? null
-        : restaurants.findById(request.restaurantId()).orElse(null);
-    Menu menu = request.menuId() == null
-        ? null
-        : menus.findById(request.menuId()).orElse(null);
+        : restaurant.menus().stream()
+            .filter(m -> m.id().equals(request.menuId()))
+            .findFirst()
+            .orElse(null);
 
     String menuLine = menuLine(restaurant, menu);
-    List<String> phrases = resolveRequests(user, request, restaurant, menu);
+    List<String> phrases = resolveRequests(request, menu);
     List<CardRequest> printed = polish(phrases, user.getAllergies(), menuLine);
 
     OrderCard card = new OrderCard(
         userId,
-        restaurant == null ? null : restaurant.getId(),
-        menu == null ? null : menu.getId(),
+        restaurant == null ? null : restaurant.id(),
+        menu == null ? null : menu.id(),
         menuLine);
     card.setRequests(printed.stream().map(CardRequest::phrase).toList());
     cards.save(card);
@@ -111,8 +106,7 @@ public class OrderCardService {
    * <p>사용자가 화면에서 골라 보냈으면 그대로 쓴다. 안 보냈으면 이 메뉴에
    * 실제로 도움이 되는 문구(판정 결과)와 상용 문구를 합쳐 채운다.
    */
-  private List<String> resolveRequests(
-      AppUser user, CreateRequest request, Restaurant restaurant, Menu menu) {
+  private List<String> resolveRequests(CreateRequest request, MenuView menu) {
 
     if (request.requests() != null && !request.requests().isEmpty()) {
       return request.requests().stream()
@@ -124,13 +118,9 @@ public class OrderCardService {
     }
 
     Set<String> out = new LinkedHashSet<>();
-    if (restaurant != null && menu != null) {
+    if (menu != null) {
       // 이 메뉴에 대한 판정에서 나온 제안을 먼저 넣는다.
-      search.detail(user.getId(), restaurant.getId(), null, null).menus().stream()
-          .filter(m -> m.id().equals(menu.getId()))
-          .map(MenuView::suggestedRequests)
-          .findFirst()
-          .ifPresent(out::addAll);
+      out.addAll(menu.suggestedRequests());
     }
     return out.stream().limit(MAX_REQUESTS).toList();
   }
@@ -190,17 +180,37 @@ public class OrderCardService {
         medsLine, FOOTER, UserService.DISCLAIMER);
   }
 
-  private String menuLine(Restaurant restaurant, Menu menu) {
-    if (restaurant == null && menu == null) {
+  /**
+   * 카드에 실을 식당.
+   *
+   * <p>관광공사를 잠시 못 부르면 식당 줄 없이 카드를 만든다. 카드는 매장 앞에서
+   * 바로 써야 하는 물건이라, 식당 이름 한 줄 때문에 통째로 실패하는 것보다 낫다.
+   */
+  private RestaurantDetail findRestaurant(Long userId, Long restaurantId) {
+    if (restaurantId == null) {
+      return null;
+    }
+    try {
+      return search.detail(userId, restaurantId, null, null);
+    } catch (ResponseStatusException e) {
+      if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+        return null;
+      }
+      throw e;
+    } catch (TourApiException e) {
+      log.warn("카드 식당 조회 실패 — 식당 줄 없이 만듭니다: {}", e.getMessage());
+      return null;
+    }
+  }
+
+  private String menuLine(RestaurantDetail restaurant, MenuView menu) {
+    if (restaurant == null) {
       return null;
     }
     if (menu == null) {
-      return restaurant.getName();
+      return restaurant.name();
     }
-    if (restaurant == null) {
-      return menu.getRawName();
-    }
-    return restaurant.getName() + " · " + menu.getRawName();
+    return restaurant.name() + " · " + menu.name();
   }
 
   private AppUser requireUser(Long userId) {

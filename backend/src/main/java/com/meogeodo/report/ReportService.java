@@ -2,12 +2,14 @@ package com.meogeodo.report;
 
 import com.meogeodo.domain.RestaurantFlag;
 import com.meogeodo.domain.RestaurantFlagRepository;
-import com.meogeodo.domain.RestaurantRepository;
 import com.meogeodo.domain.Review;
 import com.meogeodo.domain.ReviewRepository;
 import com.meogeodo.report.ReportDtos.CreateRequest;
 import com.meogeodo.report.ReportDtos.ReviewListResponse;
 import com.meogeodo.report.ReportDtos.ReviewView;
+import com.meogeodo.tour.TourApi;
+import com.meogeodo.tour.TourApi.Place;
+import com.meogeodo.tour.TourApiException;
 import com.meogeodo.user.AppUser;
 import com.meogeodo.user.AppUserRepository;
 import com.meogeodo.user.UserProfile;
@@ -49,19 +51,19 @@ public class ReportService {
   static final int FLAG_THRESHOLD = 2;
 
   private final ReviewRepository reviews;
-  private final RestaurantRepository restaurants;
+  private final TourApi tour;
   private final RestaurantFlagRepository flags;
   private final AppUserRepository users;
   private final VocabularyService vocabulary;
 
   public ReportService(
       ReviewRepository reviews,
-      RestaurantRepository restaurants,
+      TourApi tour,
       RestaurantFlagRepository flags,
       AppUserRepository users,
       VocabularyService vocabulary) {
     this.reviews = reviews;
-    this.restaurants = restaurants;
+    this.tour = tour;
     this.flags = flags;
     this.users = users;
     this.vocabulary = vocabulary;
@@ -70,9 +72,9 @@ public class ReportService {
   @Transactional
   public ReviewView create(Long userId, CreateRequest request) {
     AppUser user = requireUser(userId);
-    if (!restaurants.existsById(request.restaurantId())) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "식당을 찾을 수 없습니다");
-    }
+    // 식당은 저장하지 않는다. 있는 식당인지 관광공사에 물어본다.
+    Place place = tour.place(String.valueOf(request.restaurantId()))
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "식당을 찾을 수 없습니다"));
 
     Review review = new Review(
         request.restaurantId(), userId, Boolean.TRUE.equals(request.ok()), request.note());
@@ -82,7 +84,7 @@ public class ReportService {
     reviews.save(review);
 
     deriveFlags(request.restaurantId());
-    return toView(review, user, true);
+    return toView(review, user, true, place.title());
   }
 
   @Transactional(readOnly = true)
@@ -107,10 +109,11 @@ public class ReportService {
   public List<ReviewView> listMine(Long userId) {
     AppUser user = requireUser(userId);
     List<Review> mine = reviews.findByUserIdOrderByCreatedAtDesc(userId);
-    // 건마다 식당을 조회하면 기록이 쌓일수록 쿼리가 선형으로 늘어난다.
+    // 식당 이름은 관광공사에서 병렬로 받는다. 못 받은 식당은 이름 없이 나간다.
     Map<Long, String> names = new java.util.HashMap<>();
-    restaurants.findAllById(mine.stream().map(Review::getRestaurantId).distinct().toList())
-        .forEach(r -> names.put(r.getId(), r.getName()));
+    tour.places(mine.stream().map(r -> String.valueOf(r.getRestaurantId())).distinct().toList())
+        .forEach((contentId, place) ->
+            place.ifPresent(p -> names.put(Long.valueOf(contentId), p.title())));
     return mine.stream()
         .map(r -> toView(r, user, true, names.get(r.getRestaurantId())))
         .toList();
@@ -176,12 +179,17 @@ public class ReportService {
 
   // ── 변환 ──────────────────────────────────────────────────────────
 
+  /**
+   * 식당 이름. 관광공사를 잠시 못 부르면 {@code null} — 이름 한 줄 때문에 제보
+   * 목록 전체가 실패하면 안 된다.
+   */
   private String restaurantName(Long restaurantId) {
-    return restaurants.findById(restaurantId).map(r -> r.getName()).orElse(null);
-  }
-
-  private ReviewView toView(Review review, AppUser author, boolean mine) {
-    return toView(review, author, mine, restaurantName(review.getRestaurantId()));
+    try {
+      return tour.place(String.valueOf(restaurantId)).map(Place::title).orElse(null);
+    } catch (TourApiException e) {
+      log.warn("식당 이름 조회 실패 restaurantId={}: {}", restaurantId, e.getMessage());
+      return null;
+    }
   }
 
   /** 식당 이름을 이미 알고 있을 때. 목록에서 건마다 조회하지 않기 위함이다. */

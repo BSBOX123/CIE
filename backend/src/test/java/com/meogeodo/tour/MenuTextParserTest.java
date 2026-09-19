@@ -1,4 +1,4 @@
-package com.meogeodo.ingest;
+package com.meogeodo.tour;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

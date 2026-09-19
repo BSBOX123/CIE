@@ -3,16 +3,14 @@ package com.meogeodo.report;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.meogeodo.domain.Restaurant;
 import com.meogeodo.domain.RestaurantFlag;
 import com.meogeodo.domain.RestaurantFlagRepository;
-import com.meogeodo.domain.RestaurantRepository;
 import com.meogeodo.report.ReportDtos.CreateRequest;
+import com.meogeodo.tour.FakeTourApi;
 import com.meogeodo.user.AppUser;
 import com.meogeodo.user.UserService;
 import com.meogeodo.web.AuthDtos.SignupRequest;
 import jakarta.persistence.EntityManager;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,20 +29,19 @@ import org.springframework.transaction.annotation.Transactional;
 class ReportServiceTest {
 
   @Autowired private ReportService reports;
-  @Autowired private RestaurantRepository restaurants;
+  @Autowired private FakeTourApi tour;
   @Autowired private RestaurantFlagRepository flags;
   @Autowired private UserService userService;
   @Autowired private EntityManager em;
 
-  private Restaurant restaurant;
+  /** 관광공사 contentid. 식당은 저장하지 않는다. */
+  private Long restaurantId;
 
   @BeforeEach
   void setUp() {
-    Restaurant r = new Restaurant("c-report", "초당할머니순두부");
-    r.setLat(BigDecimal.valueOf(37.76));
-    r.setLng(BigDecimal.valueOf(128.93));
-    restaurant = restaurants.save(r);
-    em.flush();
+    tour.reset();
+    restaurantId = Long.valueOf(
+        tour.add("초당할머니순두부", 37.76, 128.93, "강원특별자치도 강릉시 초당동"));
   }
 
   private AppUser signup(String loginId, Integer birthYear, Set<String> diseases) {
@@ -55,7 +52,7 @@ class ReportServiceTest {
 
   private Long report(AppUser user, boolean ok, List<String> requests, Set<String> feedback) {
     return reports.create(user.getId(),
-        new CreateRequest(restaurant.getId(), ok, "메모", requests, feedback)).id();
+        new CreateRequest(restaurantId, ok, "메모", requests, feedback)).id();
   }
 
   @Nested
@@ -68,7 +65,7 @@ class ReportServiceTest {
       var user = signup("rp1", 1958, Set.of("당뇨"));
 
       var view = reports.create(user.getId(), new CreateRequest(
-          restaurant.getId(), true, "짜지 않은 순두부로 주문했습니다.",
+          restaurantId, true, "짜지 않은 순두부로 주문했습니다.",
           List.of("양념장은 따로 주세요", "김치·젓갈 반찬은 빼 주세요"),
           Set.of("요청이 그대로 전달됐어요")));
 
@@ -85,7 +82,7 @@ class ReportServiceTest {
       var user = signup("rp2", 1970, Set.of("고혈압"));
 
       var view = reports.create(user.getId(), new CreateRequest(
-          restaurant.getId(), false, "주방까지 전달되지 않았습니다.",
+          restaurantId, false, "주방까지 전달되지 않았습니다.",
           List.of(), Set.of("요청을 전하기 어려웠어요")));
 
       assertThat(view.ok()).isFalse();
@@ -98,7 +95,7 @@ class ReportServiceTest {
       var user = signup("rp3", 1958, Set.of());
 
       var view = reports.create(user.getId(), new CreateRequest(
-          restaurant.getId(), true, null, List.of(),
+          restaurantId, true, null, List.of(),
           Set.of("요청이 그대로 전달됐어요", "제가 지어낸 문구")));
 
       assertThat(view.feedback()).containsExactly("요청이 그대로 전달됐어요");
@@ -117,7 +114,7 @@ class ReportServiceTest {
     @DisplayName("비로그인은 제보할 수 없다")
     void anonymous() {
       assertThatThrownBy(() -> reports.create(null,
-          new CreateRequest(restaurant.getId(), true, null, List.of(), Set.of())))
+          new CreateRequest(restaurantId, true, null, List.of(), Set.of())))
           .isInstanceOf(UserService.UnauthorizedException.class);
     }
   }
@@ -134,7 +131,7 @@ class ReportServiceTest {
       report(author, true, List.of(), Set.of());
       em.flush();
 
-      var list = reports.listForRestaurant(viewer.getId(), restaurant.getId());
+      var list = reports.listForRestaurant(viewer.getId(), restaurantId);
       String label = list.reviews().get(0).author();
 
       assertThat(label).contains("대");           // 60대
@@ -151,7 +148,7 @@ class ReportServiceTest {
       report(user, true, List.of(), Set.of());
       em.flush();
 
-      var list = reports.listForRestaurant(user.getId(), restaurant.getId());
+      var list = reports.listForRestaurant(user.getId(), restaurantId);
       assertThat(list.reviews().get(0).author()).isEqualTo("내 후기");
       assertThat(list.reviews().get(0).mine()).isTrue();
     }
@@ -164,7 +161,7 @@ class ReportServiceTest {
       report(author, true, List.of(), Set.of());
       em.flush();
 
-      assertThat(reports.listForRestaurant(viewer.getId(), restaurant.getId())
+      assertThat(reports.listForRestaurant(viewer.getId(), restaurantId)
           .reviews().get(0).author()).isEqualTo("통풍");
     }
   }
@@ -174,7 +171,7 @@ class ReportServiceTest {
   class FlagDerivation {
 
     private Set<String> flagsOf() {
-      return flags.findByRestaurantIdIn(List.of(restaurant.getId())).stream()
+      return flags.findByRestaurantIdIn(List.of(restaurantId)).stream()
           .map(RestaurantFlag::getFlag)
           .collect(java.util.stream.Collectors.toSet());
     }
@@ -246,7 +243,7 @@ class ReportServiceTest {
     @DisplayName("관리자가 넣은 속성은 후기 재계산이 건드리지 않는다")
     void adminFlagsSurvive() {
       flags.save(new RestaurantFlag(
-          restaurant.getId(), "경사로", RestaurantFlag.Source.ADMIN));
+          restaurantId, "경사로", RestaurantFlag.Source.ADMIN));
       em.flush();
 
       report(signup("fl10", 1958, Set.of()), true, List.of(),
@@ -265,7 +262,7 @@ class ReportServiceTest {
           Set.of("간을 약하게 해 주셨어요"));
       em.flush();
 
-      assertThat(reports.listForRestaurant(null, restaurant.getId()).derivedFlags())
+      assertThat(reports.listForRestaurant(null, restaurantId).derivedFlags())
           .contains("저염 요청 가능");
     }
   }
@@ -296,8 +293,22 @@ class ReportServiceTest {
       em.flush();
 
       var mine = reports.listMine(user.getId());
-      assertThat(mine.get(0).restaurantId()).isEqualTo(restaurant.getId());
+      assertThat(mine.get(0).restaurantId()).isEqualTo(restaurantId);
       assertThat(mine.get(0).restaurantName()).isEqualTo("초당할머니순두부");
+    }
+
+    @Test
+    @DisplayName("관광공사를 못 불러도 내 기록은 나온다 — 가게 이름만 빠진다")
+    void myReportsSurviveTourApiFailure() {
+      var user = signup("ac1c", 1958, Set.of());
+      report(user, true, List.of("국물은 따로 담아 주세요"), Set.of());
+      em.flush();
+      tour.down(true);
+
+      var mine = reports.listMine(user.getId());
+      assertThat(mine).hasSize(1);
+      assertThat(mine.get(0).restaurantId()).isEqualTo(restaurantId);
+      assertThat(mine.get(0).restaurantName()).isNull();
     }
 
     @Test
@@ -318,7 +329,7 @@ class ReportServiceTest {
       report(signup("ac4", 1958, Set.of("당뇨")), true, List.of(), Set.of());
       em.flush();
 
-      var list = reports.listForRestaurant(null, restaurant.getId());
+      var list = reports.listForRestaurant(null, restaurantId);
       assertThat(list.count()).isEqualTo(1);
       assertThat(list.reviews().get(0).mine()).isFalse();
       assertThat(list.reviews().get(0).author()).isNotEqualTo("내 후기");

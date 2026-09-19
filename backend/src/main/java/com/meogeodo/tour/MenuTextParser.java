@@ -1,4 +1,4 @@
-package com.meogeodo.ingest;
+package com.meogeodo.tour;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;

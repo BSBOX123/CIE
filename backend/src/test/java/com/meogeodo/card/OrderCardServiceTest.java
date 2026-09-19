@@ -12,10 +12,9 @@ import com.meogeodo.domain.Dish;
 import com.meogeodo.domain.DishRepository;
 import com.meogeodo.domain.DishTag;
 import com.meogeodo.domain.DishTagRepository;
-import com.meogeodo.domain.Menu;
-import com.meogeodo.domain.MenuRepository;
-import com.meogeodo.domain.Restaurant;
-import com.meogeodo.domain.RestaurantRepository;
+import com.meogeodo.search.RestaurantSearchService;
+import com.meogeodo.tour.FakeTourApi;
+import com.meogeodo.tour.MenuTextParser;
 import com.meogeodo.user.AppUser;
 import com.meogeodo.user.UserService;
 import com.meogeodo.web.AuthDtos.ProfileUpdateRequest;
@@ -25,6 +24,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -42,13 +42,21 @@ class OrderCardServiceTest {
 
   @Autowired private OrderCardService cards;
   @Autowired private UserService userService;
-  @Autowired private RestaurantRepository restaurants;
-  @Autowired private MenuRepository menus;
+  @Autowired private FakeTourApi tour;
+  @Autowired private MenuTextParser parser;
   @Autowired private DishRepository dishes;
   @Autowired private DishTagRepository dishTags;
   @Autowired private EntityManager em;
 
   @MockitoBean private CardPolishClient polisher;
+
+  @BeforeEach
+  void resetTour() {
+    tour.reset();
+  }
+
+  /** 관광공사에 있는 식당의 메뉴 하나. */
+  private record Picked(Long restaurantId, Long menuId) {}
 
   private AppUser signup(String loginId, Set<String> diseases, Set<String> allergies) {
     return userService.signup(new SignupRequest(
@@ -56,19 +64,16 @@ class OrderCardServiceTest {
         diseases, Set.of(), allergies, false, Set.of("혈압약"), null, false));
   }
 
-  private Menu menuWithTags(String restaurantName, String menuName,
+  private Picked menuWithTags(String restaurantName, String menuName,
       Set<String> cares, Set<String> traceAllergens) {
-    Restaurant r = new Restaurant("c-" + restaurantName, restaurantName);
-    r.setLat(BigDecimal.valueOf(37.79));
-    r.setLng(BigDecimal.valueOf(128.89));
-    restaurants.save(r);
+    String contentId = tour.add(restaurantName, 37.79, 128.89, "강원특별자치도 강릉시 초당동");
+    tour.menu(contentId, menuName, null);
 
-    Dish dish = dishes.save(new Dish(menuName + "-dish"));
+    String normalized = parser.normalize(menuName);
+    Dish dish = dishes.findByNormalizedName(normalized)
+        .orElseGet(() -> dishes.save(new Dish(normalized)));
     dish.setTaggedAt(OffsetDateTime.now());
     dishes.save(dish);
-    Menu m = new Menu(r, menuName, true);
-    m.setDish(dish);
-    menus.save(m);
 
     cares.forEach(c -> dishTags.save(new DishTag(
         dish, DishTag.TagType.CARE, c, DishTag.Source.NUTRITION_DB, BigDecimal.ONE)));
@@ -79,7 +84,7 @@ class OrderCardServiceTest {
       dishTags.save(t);
     });
     em.flush();
-    return m;
+    return new Picked(Long.valueOf(contentId), RestaurantSearchService.menuId(menuName));
   }
 
   /** 다듬기를 통과시키는 대역. */
@@ -137,13 +142,39 @@ class OrderCardServiceTest {
     @DisplayName("메뉴를 지정하면 '식당 · 메뉴' 로 찍힌다")
     void menuLine() {
       var user = signup("card4", Set.of(), Set.of());
-      Menu m = menuWithTags("초당할머니순두부", "순두부 백반", Set.of(), Set.of());
+      Picked m = menuWithTags("초당할머니순두부", "순두부 백반", Set.of(), Set.of());
       when(polisher.polish(any(), any(), any())).thenReturn(null);
 
       var card = cards.create(user.getId(),
-          new CreateRequest(m.getRestaurant().getId(), m.getId(), List.of("a")));
+          new CreateRequest(m.restaurantId(), m.menuId(), List.of("a")));
 
       assertThat(card.menuLine()).isEqualTo("초당할머니순두부 · 순두부 백반");
+    }
+
+    @Test
+    @DisplayName("관광공사를 못 불러도 카드는 만들어진다 — 식당 줄만 빠진다")
+    void survivesTourApiFailure() {
+      var user = signup("card6", Set.of(), Set.of());
+      Picked m = menuWithTags("초당할머니순두부", "순두부 백반", Set.of(), Set.of());
+      tour.down(true);
+      when(polisher.polish(any(), any(), any())).thenReturn(null);
+
+      var card = cards.create(user.getId(),
+          new CreateRequest(m.restaurantId(), m.menuId(), List.of("a")));
+
+      assertThat(card.menuLine()).isNull();
+      assertThat(card.requests()).extracting(CardDtos.CardRequest::phrase).containsExactly("a");
+    }
+
+    @Test
+    @DisplayName("없는 식당이면 식당 줄 없이 만든다")
+    void unknownRestaurant() {
+      var user = signup("card7", Set.of(), Set.of());
+      when(polisher.polish(any(), any(), any())).thenReturn(null);
+
+      var card = cards.create(user.getId(), new CreateRequest(999L, 1L, List.of("a")));
+
+      assertThat(card.menuLine()).isNull();
     }
 
     @Test
@@ -253,11 +284,11 @@ class OrderCardServiceTest {
     @DisplayName("요청을 안 보내면 메뉴 판정에서 제안 문구를 가져온다")
     void fillsFromMenuVerdict() {
       var user = signup("auto1", Set.of("고혈압"), Set.of("대두"));
-      Menu m = menuWithTags("순두부집", "순두부찌개", Set.of("나트륨"), Set.of("대두"));
+      Picked m = menuWithTags("순두부집", "순두부찌개", Set.of("나트륨"), Set.of("대두"));
       when(polisher.polish(any(), any(), any())).thenReturn(null);
 
       var card = cards.create(user.getId(),
-          new CreateRequest(m.getRestaurant().getId(), m.getId(), null));
+          new CreateRequest(m.restaurantId(), m.menuId(), null));
 
       assertThat(card.requests()).extracting(CardDtos.CardRequest::phrase)
           .contains("대두는 빼 주세요")

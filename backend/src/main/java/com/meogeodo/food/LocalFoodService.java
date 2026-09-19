@@ -47,6 +47,9 @@ import org.springframework.web.server.ResponseStatusException;
  *
  * <p>사용자 좌표 → 지역 판정 → 그 지역 음식 + 판정 → 그 음식을 파는 근처 식당.
  *
+ * <p><b>음식도 식당도 내 시도 것만.</b> 예전에는 대구에서도 부산 밀면이 목록에 뜨고,
+ * 밀면을 누르면 경주 가게를 추천했다. "여기 음식"이라는 말과 어긋나 헷갈린다.
+ *
  * <p><b>지역 판정</b>은 SPEC 1.1.1 대로 가장 가까운 식당의 시도 코드를 이어받는다.
  * 역지오코딩 API 가 따로 필요 없다. <b>파는 식당</b>은 저장하지 않고 요청 때마다
  * 관광공사에서 찾는다 (공모전 규정: 공사 데이터 적재 금지).
@@ -122,19 +125,17 @@ public class LocalFoodService {
           here == null ? null : here.code(), List.of(), personalized, UserService.DISCLAIMER);
     }
 
-    List<LocalFood> ordered = new ArrayList<>(foods.findAllByOrderBySortOrderAsc());
-    // 내 시도 음식을 먼저. 나머지는 원래 순서를 지킨다(stable sort).
-    ordered.sort(Comparator.comparing(f -> !here.code().equals(f.getRegionCode())));
+    List<LocalFood> mine = foods.findByRegionCodeOrderBySortOrderAsc(here.code());
 
     UserHealthProfile profile = search.profileOf(userId);
-    Map<Long, Judged> judged = judge(ordered.stream().map(LocalFood::getDishId).toList(), profile);
+    Map<Long, Judged> judged = judge(mine.stream().map(LocalFood::getDishId).toList(), profile);
 
     List<FoodItem> items = new ArrayList<>();
-    for (LocalFood f : ordered) {
+    for (LocalFood f : mine) {
       Judged j = judged.getOrDefault(f.getDishId(), Judged.PENDING);
       boolean show = personalized && j.tagged();
       items.add(new FoodItem(
-          f.getId(), f.getName(), f.getRegionLabel(), here.code().equals(f.getRegionCode()),
+          f.getId(), f.getName(), f.getRegionLabel(),
           j.tagStatus(),
           show ? seal(judgment.judgeMenu(j.tags(), profile)) : null,
           show ? judgment.summarize(j.tags(), profile) : null));
@@ -143,7 +144,12 @@ public class LocalFoodService {
         here.name(), here.district(), here.code(), items, personalized, UserService.DISCLAIMER);
   }
 
-  /** 지역 음식 상세. 좌표를 주면 이 음식을 파는 근처 식당도 찾는다. */
+  /**
+   * 지역 음식 상세. 좌표를 주면 이 음식을 파는 근처 식당도 찾는다.
+   *
+   * <p>식당은 <b>사용자가 지금 있는 시도 안에서만</b> 찾는다. 그 시도에 파는 곳이 없으면
+   * 멀리 다른 지역 가게를 대신 보여 주지 않고 비워 둔다.
+   */
   public FoodDetail detail(Long userId, String foodId, Double lat, Double lng) {
     LocalFood food = foods.findById(foodId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "지역 음식을 찾을 수 없습니다"));
@@ -238,26 +244,36 @@ public class LocalFoodService {
   /**
    * 이 음식을 파는 식당을 가까운 순으로.
    *
-   * <p>두 갈래로 찾는다. ① 가게 이름에 음식명이 들어간 곳 — 전국 상호 검색이라
-   * 멀리 있어도 잡힌다. ② 근처 식당 몇 곳의 메뉴를 열어 음식명이 있는 곳 — 이름만으로는
-   * 못 찾는 가게를 보충한다.
+   * <p>두 갈래로 찾는다. ① 가게 이름에 음식명이 들어간 곳 — 내 시도 안 상호 검색.
+   * ② 근처 식당 몇 곳의 메뉴를 열어 음식명이 있는 곳 — 이름만으로는 못 찾는 가게를
+   * 보충한다.
    */
   private List<RestaurantSummary> restaurantsSelling(
       Long userId, LocalFood food, double lat, double lng) {
 
     // 메뉴 이름은 띄어쓰기를 뺀 정규화 이름으로 비교한다 ("아구 찜" = "아구찜").
     List<String> needles = food.keywordList().stream().map(parser::normalize).toList();
+    Region here = regionOf(lat, lng);
+    if (here == null || here.code() == null) {
+      return List.of();
+    }
     Map<String, Place> found = new LinkedHashMap<>();
 
     for (String keyword : food.keywordList()) {
-      for (Place p : tour.keyword(keyword, KEYWORD_ROWS)) {
-        if (p.contentId() != null && p.lat() != null && p.lng() != null) {
+      // API 가 시도로 거른다. 그래도 한 번 더 확인한다 — 코드가 비어 오는 항목이 있다.
+      for (Place p : tour.keyword(keyword, here.code(), KEYWORD_ROWS)) {
+        if (p.contentId() != null && p.lat() != null && p.lng() != null
+            && here.code().equals(p.regionCode())) {
           found.putIfAbsent(p.contentId(), p);
         }
       }
     }
 
-    List<Place> around = tour.nearby(lat, lng, MENU_PROBE_RADIUS_M, 1, MENU_PROBE_COUNT).places();
+    // 근처 식당 메뉴 확인도 같은 시도만. 시도 경계 근처에서는 반경이 옆 시도로 넘어간다.
+    List<Place> around = tour.nearby(lat, lng, MENU_PROBE_RADIUS_M, 1, MENU_PROBE_COUNT).places()
+        .stream()
+        .filter(p -> here.code().equals(p.regionCode()))
+        .toList();
     Map<String, Optional<Intro>> intros =
         tour.intros(around.stream().map(Place::contentId).toList());
     for (Place p : around) {

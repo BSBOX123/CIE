@@ -50,8 +50,8 @@ public class FoodController {
       summary = "현재 위치의 지역 음식",
       description =
           """
-          내 시도의 음식이 먼저(`sameRegion=true`), 이어서 같은 권역의 다른 지역 음식이 온다.
-          응답의 `region`·`district` 로 "부산 해운대구" 같은 현재 위치 표시를 그릴 수 있다.""")
+          내 현재 시도의 지역 음식만 온다. 응답의 `region`·`district` 로 "부산 해운대구" 같은
+          현재 위치 표시를 그릴 수 있다.""")
   @ApiResponses({
     @ApiResponse(responseCode = "200", description = "조회됨. 보유하지 않은 지역이면 items 가 빈 배열"),
     @ApiResponse(responseCode = "503", description = "관광공사 API 를 잠시 불러오지 못해 지역을 정하지 못함")
@@ -70,8 +70,9 @@ public class FoodController {
       summary = "지역 음식 상세",
       description =
           """
-          설명·판정·요청 팁과 이 음식을 파는 근처 식당(최대 10곳, 가까운 순)을 준다.
-          식당은 관광공사에서 실시간으로 찾으므로 좌표(`lat`,`lng`)를 함께 줘야 채워진다.
+          설명·판정·요청 팁과 이 음식을 파는 식당(최대 10곳, 가까운 순)을 준다.
+          식당은 **내 현재 시도 안에서만** 관광공사에서 실시간으로 찾으므로 좌표(`lat`,`lng`)를
+          함께 줘야 채워진다.
           관광공사를 잠시 못 부르면 `restaurantsUnavailable=true` 로 식당만 비운다.""")
   @ApiResponses({
     @ApiResponse(responseCode = "200", description = "조회됨"),

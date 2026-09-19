@@ -80,10 +80,11 @@ public class FakeTourApi implements TourApi {
   }
 
   @Override
-  public List<Place> keyword(String keyword, int rows) {
+  public List<Place> keyword(String keyword, String regionCode, int rows) {
     guard();
     return places.values().stream()
         .filter(p -> p.title().contains(keyword))
+        .filter(p -> regionCode == null || regionCode.equals(p.regionCode()))
         .sorted(Comparator.comparing(Place::contentId))
         .limit(rows)
         .toList();

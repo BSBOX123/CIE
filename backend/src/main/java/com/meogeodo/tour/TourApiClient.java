@@ -96,13 +96,17 @@ public class TourApiClient implements TourApi {
   }
 
   @Override
-  public List<Place> keyword(String keyword, int rows) {
+  public List<Place> keyword(String keyword, String regionCode, int rows) {
     if (keyword == null || keyword.isBlank()) {
       return List.of();
     }
+    String region = regionCode != null && regionCode.matches("\\d{1,5}")
+        ? "&lDongRegnCd=" + regionCode
+        : "";
     JsonNode body = call("searchKeyword2",
         "contentTypeId=" + CONTENT_TYPE_RESTAURANT
             + "&keyword=" + URLEncoder.encode(keyword.trim(), StandardCharsets.UTF_8)
+            + region
             + "&arrange=A&numOfRows=" + rows + "&pageNo=1");
     return items(body).stream().map(TourApiClient::toPlace).toList();
   }

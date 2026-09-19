@@ -52,14 +52,14 @@ class LocalFoodServiceTest {
     tour.reset();
     Dish milmyeon = taggedDish("밀면-lf", "밀", DishTag.Amount.MAIN);
     Dish mulhoe = taggedDish("물회-lf", "오징어", DishTag.Amount.MAIN);
-    Dish pending = dishes.save(new Dish("추어탕-lf"));
+    Dish pending = dishes.save(new Dish("돼지국밥-lf"));
 
     foods.save(new LocalFood("milmyeon", "밀면", milmyeon.getId(), "26", "부산",
         "부산식 냉면", "밀면", 10));
+    foods.save(new LocalFood("dwaeji-gukbap", "돼지국밥", pending.getId(), "26", "부산",
+        "돼지국밥", "돼지국밥", 20));
     foods.save(new LocalFood("mulhoe", "물회", mulhoe.getId(), "47", "경북 포항",
-        "포항 물회", "물회", 20));
-    foods.save(new LocalFood("chueotang", "추어탕", pending.getId(), "48", "경남",
-        "추어탕", "추어탕", 30));
+        "포항 물회", "물회", 30));
     tips.save(new LocalFoodTip("milmyeon", "육수는 조금만 담아 주세요", 1));
     em.flush();
   }
@@ -102,16 +102,25 @@ class LocalFoodServiceTest {
     }
 
     @Test
-    @DisplayName("내 시도 음식이 먼저 오고, 같은 권역의 다른 지역 음식이 뒤따른다")
-    void sameRegionFirst() {
+    @DisplayName("내 시도 음식만 나온다 — 부산에서 경북 물회를 섞지 않는다")
+    void onlyMyRegion() {
       busanRestaurant("해운대횟집", 35.1590, 129.1600);
 
       var items = service.list(null, LAT, LNG).items();
 
       assertThat(items).extracting(FoodDtos.FoodItem::id)
-          .containsExactly("milmyeon", "mulhoe", "chueotang");
-      assertThat(items.get(0).sameRegion()).isTrue();
-      assertThat(items.get(1).sameRegion()).isFalse();
+          .containsExactly("milmyeon", "dwaeji-gukbap");
+    }
+
+    @Test
+    @DisplayName("같은 권역이라도 음식이 없는 시도면 빈 목록 — 옆 시도 음식으로 채우지 않는다")
+    void coveredButNoFoodOfMine() {
+      tour.add("동성로식당", 35.8714, 128.6014, "대구광역시 중구 동성로 1", "27");
+
+      var result = service.list(null, 35.8714, 128.6014);
+
+      assertThat(result.region()).isEqualTo("대구");
+      assertThat(result.items()).isEmpty();
     }
 
     @Test
@@ -166,9 +175,9 @@ class LocalFoodServiceTest {
       busanRestaurant("해운대횟집", 35.1590, 129.1600);
       Long userId = signup("lf2", Set.of("밀"));
 
-      var item = service.list(userId, LAT, LNG).items().get(2);
+      var item = service.list(userId, LAT, LNG).items().get(1);
 
-      assertThat(item.id()).isEqualTo("chueotang");
+      assertThat(item.id()).isEqualTo("dwaeji-gukbap");
       assertThat(item.tagStatus()).isEqualTo("PENDING");
       assertThat(item.seal()).isNull();
     }
@@ -210,6 +219,29 @@ class LocalFoodServiceTest {
 
       assertThat(restaurants).extracting(RestaurantSummary::id)
           .containsExactly(Long.valueOf(near), Long.valueOf(far));
+    }
+
+    @Test
+    @DisplayName("다른 시도의 가게는 추천하지 않는다 — 대구에서 경주 가게를 권하지 않는다")
+    void onlySameRegionRestaurants() {
+      String busan = busanRestaurant("해운대밀면", 35.1600, 129.1610);
+      tour.add("경주밀면", 35.1620, 129.1630, "경상북도 경주시 1", "47");  // 가까워도 다른 시도
+
+      var restaurants = service.detail(null, "milmyeon", LAT, LNG).restaurants();
+
+      assertThat(restaurants).extracting(RestaurantSummary::id)
+          .containsExactly(Long.valueOf(busan));
+    }
+
+    @Test
+    @DisplayName("내 시도에 파는 곳이 없으면 비운다 — 멀리 있는 다른 지역 가게로 채우지 않는다")
+    void noShopInMyRegion() {
+      busanRestaurant("해운대밀면", 35.1600, 129.1610);
+      tour.add("동성로식당", 35.8714, 128.6014, "대구광역시 중구 동성로 1", "27");
+
+      var restaurants = service.detail(null, "milmyeon", 35.8714, 128.6014).restaurants();
+
+      assertThat(restaurants).isEmpty();
     }
 
     @Test

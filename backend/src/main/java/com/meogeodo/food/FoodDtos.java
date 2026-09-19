@@ -20,8 +20,8 @@ public final class FoodDtos {
       @Schema(
               description =
                   """
-                  지역 음식. 내 시도의 음식이 먼저 오고(sameRegion=true), 이어서 같은 권역의
-                  다른 지역 음식이 온다. **비어 있으면 지역 음식 섹션을 숨길 것** (SPEC 7.5).
+                  내 현재 시도의 지역 음식만 온다 (다른 시도 음식은 섞지 않는다).
+                  **비어 있으면 지역 음식 섹션을 숨길 것** (SPEC 7.5).
                   현재는 경상권(부산·대구·울산·경북·경남)만 보유한다.""")
           List<FoodItem> items,
       @Schema(description = "false 면 토큰이 없어 판정을 못 한 것") boolean personalized,
@@ -31,8 +31,7 @@ public final class FoodDtos {
   public record FoodItem(
       @Schema(example = "milmyeon") String id,
       @Schema(example = "밀면") String name,
-      @Schema(description = "이 음식의 지역", example = "부산") String region,
-      @Schema(description = "내 현재 시도의 음식인지") boolean sameRegion,
+      @Schema(description = "이 음식의 지역 (시도, 필요하면 시군까지)", example = "부산") String region,
       @Schema(description = "TAGGED 가 아니면 분석 전이라 seal 이 비어 있다", example = "TAGGED")
           String tagStatus,
       @Schema(description = "비로그인이거나 분석 전이면 null. 안전하다는 뜻이 아니다") Seal seal,
@@ -56,9 +55,9 @@ public final class FoodDtos {
       @Schema(
               description =
                   """
-                  이 음식을 파는 근처 식당 (가까운 순, 최대 10곳). 관광공사에서 실시간으로
-                  찾는다 — 가게 이름에 음식명이 들어간 곳 + 근처 식당 중 메뉴에 있는 곳.
-                  요청에 lat,lng 가 없으면 빈 배열.""")
+                  이 음식을 파는 식당 (가까운 순, 최대 10곳). **내 현재 시도 안의 식당만**
+                  관광공사에서 실시간으로 찾는다 — 가게 이름에 음식명이 들어간 곳 + 근처 식당 중
+                  메뉴에 있는 곳. 내 시도에 파는 곳이 없거나 요청에 lat,lng 가 없으면 빈 배열.""")
           List<RestaurantSummary> restaurants,
       @Schema(description = "true 면 관광공사를 잠시 못 불러 식당 목록이 비었다. 음식 정보는 정상")
           boolean restaurantsUnavailable,

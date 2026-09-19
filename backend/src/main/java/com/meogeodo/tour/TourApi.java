@@ -27,12 +27,14 @@ public interface TourApi {
   NearbyPage nearby(double lat, double lng, int radiusMeters, int pageNo, int rows);
 
   /**
-   * 이름에 검색어가 들어간 음식점 (전국). 거리는 채워지지 않는다.
+   * 이름에 검색어가 들어간 음식점. 거리는 채워지지 않는다.
    *
    * <p>지역 음식을 파는 곳을 찾는 데 쓴다. 한국 식당은 상호에 파는 음식이 들어가는
    * 경우가 많다 (예: 청도돼지국밥, 초량밀면).
+   *
+   * @param regionCode 법정동 시도 코드. 주면 그 시도 안에서만 찾는다 (API 가 거른다)
    */
-  List<Place> keyword(String keyword, int rows);
+  List<Place> keyword(String keyword, String regionCode, int rows);
 
   /** 식당 기본 정보 (이름·주소·좌표·이미지). 없는 식당이면 비어 있다. */
   Optional<Place> place(String contentId);

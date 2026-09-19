@@ -33,7 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
     name = "3. 식당",
     description =
         """
-        GPS 반경 검색과 식당 상세.
+        좌표 반경 검색과 식당 상세. 좌표는 내 위치(GPS) 또는 사용자가 고른 지역의 대표 좌표
+        (`docs/regions.json`) — 문서 맨 위 "위치와 지역 선택" 참고.
 
         식당·메뉴는 요청마다 **한국관광공사 API 에서 실시간으로** 받는다. 식당 `id` 는
         관광공사 `contentid` 다. 관광공사를 불러오지 못하면 빈 결과가 아니라 `503`
@@ -70,11 +71,12 @@ public class RestaurantController {
   @GetMapping
   public SearchResponse search(
       @AuthenticationPrincipal Long userId,
-      @Parameter(description = "위도", required = true, example = "37.7519")
+      @Parameter(description = "위도. 내 위치 또는 고른 지역의 대표 좌표", required = true, example = "37.7519")
           @RequestParam @Min(-90) @Max(90) double lat,
       @Parameter(description = "경도", required = true, example = "128.8761")
           @RequestParam @Min(-180) @Max(180) double lng,
-      @Parameter(description = "반경(m). 비우면 서버 기본값", example = "1000")
+      @Parameter(description = "반경(m), 최대 20000. 비우면 2000. 지역을 직접 골랐을 때는 5000 권장",
+              example = "2000")
           @RequestParam(required = false) Integer radius,
       @Parameter(description = "식당 이름 검색어", example = "초당순두부")
           @RequestParam(required = false) String q,

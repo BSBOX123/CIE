@@ -81,9 +81,23 @@ public class OpenApiConfig {
             자체 ID/PW + JWT. 로그인 응답의 `accessToken` 을 `Authorization: Bearer <토큰>` 으로 보낸다.
 
             - **필수**: `/api/me/**`, `/api/order-cards/**`, `POST /api/reports`
-            - **선택**: `/api/restaurants/**` — 토큰이 없으면 목록만, 있으면 **사용자 기준 판정**이 함께 온다.
+            - **선택**: `/api/restaurants/**`, `/api/foods/**` — 토큰이 없으면 목록만, 있으면 **사용자 기준 판정**이 함께 온다.
               이때 응답의 `personalized` 로 어느 쪽인지 알 수 있다.
             - **불필요**: `/api/auth/**`, `GET /api/reports/options`
+
+            ## 위치와 지역 선택
+
+            식당·지역 음식 API 는 좌표(`lat`, `lng`)로만 동작한다. 서버는 사용자 위치를 모른다.
+
+            - **내 위치**: 브라우저 `navigator.geolocation` 으로 얻은 좌표를 보낸다
+            - **지역 직접 선택** (여행 전 미리 찾아보기, 위치 권한 거부): 저장소의
+              [`docs/regions.json`](https://github.com/BSBOX123/CIE/blob/main/docs/regions.json)
+              에서 고른 시도·시군구의 대표 좌표를 보낸다. 시도만 고르면 그 시도의 `default`
+              시군구 좌표를 쓴다. 검색 반경은 `radius=5000` 을 권한다
+            - 응답의 거리·도보 시간은 **보낸 좌표 기준**이다. 직접 고른 지역에서는 사용자와의
+              거리가 아니므로 숨기거나 "중심에서 n km" 로 표시할 것
+            - 식당은 관광공사에서 실시간으로 받는다. 못 받으면 `503 TOUR_API_UNAVAILABLE`
+              (빈 목록이 아니다). 식당 상세에서 메뉴만 못 받으면 200 + `menusUnavailable=true`
 
             ## 판정값 (`seal`)
 

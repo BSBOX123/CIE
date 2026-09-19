@@ -69,7 +69,7 @@ public class TaggingService {
    */
   @Transactional
   public int tagPending() {
-    List<Dish> pending = dishes.findTop200ByTaggedAtIsNull();
+    List<Dish> pending = dishes.findTop200ByTaggedAtIsNullAndNeedsReviewFalse();
     if (pending.isEmpty()) {
       log.info("태깅 대상 없음");
       return 0;

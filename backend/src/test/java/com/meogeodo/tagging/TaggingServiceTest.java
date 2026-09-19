@@ -218,10 +218,24 @@ class TaggingServiceTest {
     tagging.tagPending();
 
     assertThat(dishes.findById(dish.getId()).orElseThrow().isTagged()).isFalse();
-    assertThat(dishes.findTop200ByTaggedAtIsNull())
+    assertThat(dishes.findTop200ByTaggedAtIsNullAndNeedsReviewFalse())
         .extracting(Dish::getNormalizedName).contains("김치찌개");
     assertThat(runs.findAll()).singleElement()
         .satisfies(r -> assertThat(r.getFailed()).isEqualTo(1));
+  }
+
+  @Test
+  @DisplayName("음식 이름이 아니라고 걸러 둔 것(검수 대상)은 큐에서 빠진다 — Gemini 한도를 아낀다")
+  void reviewFlaggedDishesAreNotQueued() {
+    var course = givenDish("a코스");
+    course.setNeedsReview(true);
+    dishes.save(course);
+    givenDish("김치찌개");
+
+    assertThat(dishes.findTop200ByTaggedAtIsNullAndNeedsReviewFalse())
+        .extracting(Dish::getNormalizedName)
+        .contains("김치찌개")
+        .doesNotContain("a코스");
   }
 
   @Test

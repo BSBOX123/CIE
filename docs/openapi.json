@@ -16,6 +16,9 @@
     "name" : "1. 인증",
     "description" : "회원가입·로그인. 토큰이 필요 없는 유일한 구간이다."
   }, {
+    "name" : "6. 지역 음식",
+    "description" : "현재 GPS 좌표의 지역 음식과, 그 음식을 파는 근처 식당.\n\n**좌표는 프론트가 브라우저에서 얻어 보낸다** (`navigator.geolocation`). 서버는\n좌표에서 가장 가까운 관광공사 등록 식당의 시도를 이어받아 지역을 정한다 (SPEC 1.1.1).\n위치 권한이 거부되면 사용자가 고른 지역의 중심 좌표를 보내면 된다.\n\n현재 보유 지역은 **경상권(부산·대구·울산·경북·경남)** 이다. 그 밖의 지역은\n`items` 가 빈 배열이며, 이때는 지역 음식 섹션을 숨기고 근처 식당만 보여 줄 것.\n\n토큰은 선택이다. 있으면 음식마다 사용자 기준 판정이 붙는다."
+  }, {
     "name" : "2. 내 정보",
     "description" : "로그인한 사용자의 프로필. 판정의 기준이 되는 값들이다."
   }, {
@@ -26,7 +29,7 @@
     "description" : "가게에 보여 줄 카드. 서버는 **문구만** 만들고, 카드 이미지 렌더링(canvas)은\n클라이언트가 한다. 응답 필드의 순서가 곧 카드의 위에서 아래 순서다."
   }, {
     "name" : "3. 식당",
-    "description" : "GPS 반경 검색과 식당 상세.\n\n**토큰은 선택이다.** 없으면 목록만 나오고 판정(`seal`)은 비어 있으며\n`personalized=false` 로 알린다. 있으면 같은 경로가 사용자 기준 판정을 함께 준다.\nSwagger UI 에서 판정을 보려면 위쪽 Authorize 로 토큰을 넣고 호출할 것."
+    "description" : "GPS 반경 검색과 식당 상세.\n\n식당·메뉴는 요청마다 **한국관광공사 API 에서 실시간으로** 받는다. 식당 `id` 는\n관광공사 `contentid` 다. 관광공사를 불러오지 못하면 빈 결과가 아니라 `503`\n(`TOUR_API_UNAVAILABLE`) 으로 답한다 — \"근처에 식당이 없다\"와 구분할 것.\n\n**토큰은 선택이다.** 없으면 목록만 나오고 판정(`seal`)은 비어 있으며\n`personalized=false` 로 알린다. 있으면 같은 경로가 사용자 기준 판정을 함께 준다.\nSwagger UI 에서 판정을 보려면 위쪽 Authorize 로 토큰을 넣고 호출할 것."
   } ],
   "paths" : {
     "/api/me/profile" : {
@@ -382,6 +385,16 @@
                 }
               }
             }
+          },
+          "503" : {
+            "description" : "관광공사 API 를 잠시 불러오지 못함. 잠시 후 다시 시도",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SearchResponse"
+                }
+              }
+            }
           }
         },
         "security" : [ {
@@ -398,13 +411,13 @@
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
-          "description" : "식당 id",
+          "description" : "식당 id (관광공사 contentid)",
           "required" : true,
           "schema" : {
             "type" : "integer",
             "format" : "int64"
           },
-          "example" : 1
+          "example" : 2869664
         }, {
           "name" : "lat",
           "in" : "query",
@@ -439,6 +452,16 @@
           },
           "404" : {
             "description" : "그런 식당이 없음",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestaurantDetail"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "관광공사 API 를 잠시 불러오지 못함. 잠시 후 다시 시도",
             "content" : {
               "*/*" : {
                 "schema" : {
@@ -577,6 +600,127 @@
                   "items" : {
                     "$ref" : "#/components/schemas/ReviewView"
                   }
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/foods" : {
+      "get" : {
+        "tags" : [ "6. 지역 음식" ],
+        "summary" : "현재 위치의 지역 음식",
+        "description" : "내 시도의 음식이 먼저(`sameRegion=true`), 이어서 같은 권역의 다른 지역 음식이 온다.\n응답의 `region`·`district` 로 \"부산 해운대구\" 같은 현재 위치 표시를 그릴 수 있다.",
+        "operationId" : "list",
+        "parameters" : [ {
+          "name" : "lat",
+          "in" : "query",
+          "description" : "위도",
+          "required" : true,
+          "schema" : {
+            "type" : "number",
+            "format" : "double",
+            "maximum" : 90,
+            "minimum" : -90
+          },
+          "example" : 35.1587
+        }, {
+          "name" : "lng",
+          "in" : "query",
+          "description" : "경도",
+          "required" : true,
+          "schema" : {
+            "type" : "number",
+            "format" : "double",
+            "maximum" : 180,
+            "minimum" : -180
+          },
+          "example" : 129.1604
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "조회됨. 보유하지 않은 지역이면 items 가 빈 배열",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FoodListResponse"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "관광공사 API 를 잠시 불러오지 못해 지역을 정하지 못함",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FoodListResponse"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/foods/{foodId}" : {
+      "get" : {
+        "tags" : [ "6. 지역 음식" ],
+        "summary" : "지역 음식 상세",
+        "description" : "설명·판정·요청 팁과 이 음식을 파는 근처 식당(최대 10곳, 가까운 순)을 준다.\n식당은 관광공사에서 실시간으로 찾으므로 좌표(`lat`,`lng`)를 함께 줘야 채워진다.\n관광공사를 잠시 못 부르면 `restaurantsUnavailable=true` 로 식당만 비운다.",
+        "operationId" : "detail_1",
+        "parameters" : [ {
+          "name" : "foodId",
+          "in" : "path",
+          "description" : "지역 음식 id",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "milmyeon"
+        }, {
+          "name" : "lat",
+          "in" : "query",
+          "description" : "현재 위도",
+          "required" : false,
+          "schema" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "example" : 35.1587
+        }, {
+          "name" : "lng",
+          "in" : "query",
+          "description" : "현재 경도",
+          "required" : false,
+          "schema" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "example" : 129.1604
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "조회됨",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FoodDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "그런 지역 음식이 없음",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FoodDetail"
                 }
               }
             }
@@ -826,6 +970,17 @@
           "id" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "restaurantId" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "어느 식당의 제보인지",
+            "example" : 12
+          },
+          "restaurantName" : {
+            "type" : "string",
+            "description" : "식당 이름. '내 기록' 화면에서 어느 가게였는지 보여 주는 데 쓴다",
+            "example" : "초당할머니순두부"
           },
           "author" : {
             "type" : "string",
@@ -1095,7 +1250,9 @@
         "properties" : {
           "id" : {
             "type" : "integer",
-            "format" : "int64"
+            "format" : "int64",
+            "description" : "식당 id (관광공사 contentid)",
+            "example" : 2869664
           },
           "name" : {
             "type" : "string",
@@ -1137,7 +1294,7 @@
           },
           "summary" : {
             "type" : "string",
-            "description" : "판정 근거 한 줄 요약"
+            "description" : "판정 근거 한 줄 요약. 메뉴가 없으면 \"메뉴 정보가 없습니다\", 이 식당의 메뉴만 못 불러왔으면 \"메뉴 정보를 잠시 불러오지 못했습니다\""
           },
           "firstImage" : {
             "type" : "string",
@@ -1237,7 +1394,8 @@
         "properties" : {
           "id" : {
             "type" : "integer",
-            "format" : "int64"
+            "format" : "int64",
+            "description" : "메뉴 id. 메뉴는 저장하지 않으므로 메뉴 이름에서 만든 값이다. 같은 식당의 같은 메뉴는 언제 불러도 같으니 주문요청카드의 menuId 로 그대로 보낼 것"
           },
           "name" : {
             "type" : "string",
@@ -1312,7 +1470,9 @@
         "properties" : {
           "id" : {
             "type" : "integer",
-            "format" : "int64"
+            "format" : "int64",
+            "description" : "식당 id (관광공사 contentid)",
+            "example" : 2869664
           },
           "name" : {
             "type" : "string",
@@ -1429,6 +1589,180 @@
             "items" : {
               "type" : "string"
             }
+          }
+        }
+      },
+      "FoodItem" : {
+        "type" : "object",
+        "description" : "지역 음식 1건",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "example" : "milmyeon"
+          },
+          "name" : {
+            "type" : "string",
+            "example" : "밀면"
+          },
+          "region" : {
+            "type" : "string",
+            "description" : "이 음식의 지역",
+            "example" : "부산"
+          },
+          "sameRegion" : {
+            "type" : "boolean",
+            "description" : "내 현재 시도의 음식인지"
+          },
+          "tagStatus" : {
+            "type" : "string",
+            "description" : "TAGGED 가 아니면 분석 전이라 seal 이 비어 있다",
+            "example" : "TAGGED"
+          },
+          "seal" : {
+            "$ref" : "#/components/schemas/Seal",
+            "description" : "비로그인이거나 분석 전이면 null. 안전하다는 뜻이 아니다"
+          },
+          "summary" : {
+            "type" : "string",
+            "description" : "판정 요약 (SPEC 3.3)",
+            "example" : "밀 있음"
+          }
+        }
+      },
+      "FoodListResponse" : {
+        "type" : "object",
+        "description" : "현재 위치의 지역 음식",
+        "properties" : {
+          "region" : {
+            "type" : "string",
+            "description" : "현재 위치의 시도. 근처에 관광공사 등록 식당이 없어 알 수 없으면 null",
+            "example" : "부산"
+          },
+          "district" : {
+            "type" : "string",
+            "description" : "현재 위치의 시군구",
+            "example" : "해운대구"
+          },
+          "regionCode" : {
+            "type" : "string",
+            "description" : "법정동 시도 코드",
+            "example" : 26
+          },
+          "items" : {
+            "type" : "array",
+            "description" : "지역 음식. 내 시도의 음식이 먼저 오고(sameRegion=true), 이어서 같은 권역의\n다른 지역 음식이 온다. **비어 있으면 지역 음식 섹션을 숨길 것** (SPEC 7.5).\n현재는 경상권(부산·대구·울산·경북·경남)만 보유한다.",
+            "items" : {
+              "$ref" : "#/components/schemas/FoodItem"
+            }
+          },
+          "personalized" : {
+            "type" : "boolean",
+            "description" : "false 면 토큰이 없어 판정을 못 한 것"
+          },
+          "disclaimer" : {
+            "type" : "string",
+            "description" : "화면에 그대로 노출해야 하는 고지 문구"
+          }
+        }
+      },
+      "CareReason" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "example" : "나트륨"
+          },
+          "note" : {
+            "type" : "string",
+            "example" : "국물∙양념∙젓갈에 몰려 있어요"
+          }
+        }
+      },
+      "FoodDetail" : {
+        "type" : "object",
+        "description" : "지역 음식 상세",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "example" : "milmyeon"
+          },
+          "name" : {
+            "type" : "string",
+            "example" : "밀면"
+          },
+          "region" : {
+            "type" : "string",
+            "example" : "부산"
+          },
+          "regionLine" : {
+            "type" : "string",
+            "example" : "부산 지역 음식"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "tagStatus" : {
+            "type" : "string",
+            "example" : "TAGGED"
+          },
+          "seal" : {
+            "$ref" : "#/components/schemas/Seal",
+            "description" : "비로그인이거나 분석 전이면 null"
+          },
+          "hasAllergen" : {
+            "type" : "boolean",
+            "description" : "내 알레르기와 겹치는 재료가 있는지"
+          },
+          "allergenText" : {
+            "type" : "string",
+            "description" : "알레르기 안내 한 줄. 겹치는 게 없으면 null",
+            "example" : "밀 — 주재료라 뺄 수 없습니다. 다른 음식을 고르세요."
+          },
+          "careReasons" : {
+            "type" : "array",
+            "description" : "내 주의성분과 겹치는 것",
+            "items" : {
+              "$ref" : "#/components/schemas/CareReason"
+            }
+          },
+          "tips" : {
+            "type" : "array",
+            "description" : "주문할 때 쓸 만한 요청 문구. 주문요청카드에 담을 수 있다",
+            "items" : {
+              "$ref" : "#/components/schemas/Tip"
+            }
+          },
+          "restaurants" : {
+            "type" : "array",
+            "description" : "이 음식을 파는 근처 식당 (가까운 순, 최대 10곳). 관광공사에서 실시간으로\n찾는다 — 가게 이름에 음식명이 들어간 곳 + 근처 식당 중 메뉴에 있는 곳.\n요청에 lat,lng 가 없으면 빈 배열.",
+            "items" : {
+              "$ref" : "#/components/schemas/RestaurantSummary"
+            }
+          },
+          "restaurantsUnavailable" : {
+            "type" : "boolean",
+            "description" : "true 면 관광공사를 잠시 못 불러 식당 목록이 비었다. 음식 정보는 정상"
+          },
+          "personalized" : {
+            "type" : "boolean",
+            "description" : "false 면 토큰이 없어 판정을 못 한 것"
+          },
+          "disclaimer" : {
+            "type" : "string",
+            "description" : "화면에 그대로 노출해야 하는 고지 문구"
+          }
+        }
+      },
+      "Tip" : {
+        "type" : "object",
+        "properties" : {
+          "phrase" : {
+            "type" : "string",
+            "example" : "육수는 조금만 담아 주세요"
+          },
+          "selected" : {
+            "type" : "boolean",
+            "description" : "화면 초기 선택 상태"
           }
         }
       }

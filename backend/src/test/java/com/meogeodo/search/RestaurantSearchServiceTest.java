@@ -297,6 +297,28 @@ class RestaurantSearchServiceTest {
       assertThat(RestaurantSearchService.josa("새우")).isEqualTo("새우는");
       assertThat(RestaurantSearchService.josa("밀")).isEqualTo("밀은");
       assertThat(RestaurantSearchService.josa("대두")).isEqualTo("대두는");
+    }
+
+    @Test
+    @DisplayName("이/가를 받침에 맞게 붙인다 — '밀이(가)' 로 보내지 않는다")
+    void subjectParticle() {
+      assertThat(RestaurantSearchService.subject("밀")).isEqualTo("밀이");
+      assertThat(RestaurantSearchService.subject("새우")).isEqualTo("새우가");
+      // 여러 개면 마지막 단어 기준
+      assertThat(RestaurantSearchService.subject("나트륨 · 당류")).isEqualTo("나트륨 · 당류가");
+    }
+
+    @Test
+    @DisplayName("밥·면 요청 문구는 그 음식에만 제안한다 — 버거에 '밥은 반만' 금지")
+    void carbPhraseFitsMenu() {
+      assertThat(RestaurantSearchService.fitsMenu("밥은 반만 주세요", "불고기버거")).isFalse();
+      assertThat(RestaurantSearchService.fitsMenu("면은 반만 주세요", "불고기버거")).isFalse();
+      assertThat(RestaurantSearchService.fitsMenu("밥은 반만 주세요", "김치볶음밥")).isTrue();
+      assertThat(RestaurantSearchService.fitsMenu("면은 반만 주세요", "비빔냉면")).isTrue();
+      assertThat(RestaurantSearchService.fitsMenu("밥은 반만 주세요", "비빔냉면")).isFalse();
+      assertThat(RestaurantSearchService.fitsMenu("밥은 반만 주세요", "동태탕")).isFalse();
+      // 탄수화물이 아닌 문구는 그대로 둔다
+      assertThat(RestaurantSearchService.fitsMenu("국물은 따로 담아 주세요", "불고기버거")).isTrue();
       assertThat(RestaurantSearchService.josa("고등어")).isEqualTo("고등어는");
     }
   }

@@ -312,22 +312,22 @@ public class RestaurantSearchService {
         "TAGGED", seal(verdict), row.tagViews(),
         main, trace, cares,
         detailText(main, trace, cares),
-        suggestedRequests(main, trace, cares));
+        suggestedRequests(row.name(), main, trace, cares));
   }
 
   /** 사용자가 무엇을 어떻게 해야 하는지 한 문장으로 (SPEC 11.1). */
   private String detailText(List<String> main, List<String> trace, List<String> cares) {
     if (!main.isEmpty()) {
-      return String.join(" · ", main)
-          + "이(가) 주재료로 들어갑니다. 다른 메뉴를 고르세요. 반드시 매장에 확인하세요.";
+      return subject(String.join(" · ", main))
+          + " 주재료로 들어갑니다. 다른 메뉴를 고르세요. 반드시 매장에 확인하세요.";
     }
     if (!trace.isEmpty()) {
-      return String.join(" · ", trace)
-          + "이(가) 양념에 들어갈 수 있습니다. 빼 달라고 요청하고, 반드시 매장에 확인하세요.";
+      return subject(String.join(" · ", trace))
+          + " 양념에 들어갈 수 있습니다. 빼 달라고 요청하고, 반드시 매장에 확인하세요.";
     }
     if (!cares.isEmpty()) {
       String note = vocabulary.careNotes().get(cares.get(0));
-      return String.join(" · ", cares) + "이(가) 걸립니다."
+      return subject(String.join(" · ", cares)) + " 걸립니다."
           + (note == null ? "" : " " + note + ".");
     }
     return "주의 성분과 알레르기 재료가 모두 없습니다. 그대로 주문할 수 있습니다.";
@@ -335,15 +335,60 @@ public class RestaurantSearchService {
 
   /** 이 메뉴에 실제로 도움이 되는 요청 문구 (SPEC 2.6). */
   private List<String> suggestedRequests(
-      List<String> main, List<String> trace, List<String> cares) {
+      String menuName, List<String> main, List<String> trace, List<String> cares) {
     Set<String> out = new LinkedHashSet<>();
     for (String allergen : trace) {
       out.add(josa(allergen) + " 빼 주세요");
     }
     for (String care : cares) {
-      out.addAll(vocabulary.requestsFor(care));
+      for (String phrase : vocabulary.requestsFor(care)) {
+        if (fitsMenu(phrase, menuName)) {
+          out.add(phrase);
+        }
+      }
     }
     return List.copyOf(out);
+  }
+
+  private static final java.util.regex.Pattern NOODLE = java.util.regex.Pattern.compile(
+      "면|국수|라면|우동|냉면|짬뽕|짜장|자장|파스타|스파게티|칼국수|쌀국수|소바|모밀|메밀|라멘|수제비");
+  private static final java.util.regex.Pattern RICE = java.util.regex.Pattern.compile(
+      "밥|정식|백반|죽|리조또|필라프|오므라이스|카레");
+
+  /**
+   * "밥은 반만 주세요" 같은 문구가 그 음식에 말이 되는지.
+   *
+   * <p>정제 탄수화물에는 밥·면 문구가 둘 다 묶여 있어, 버거에 "밥은 반만 주세요"가
+   * 제안됐다. 밥 문구는 밥 음식에만, 면 문구는 면 음식에만 붙인다. 빵·떡처럼
+   * 둘 다 아니면 붙이지 않는다 — 엉뚱한 요청을 카드에 싣는 것보다 낫다.
+   */
+  static boolean fitsMenu(String phrase, String menuName) {
+    String name = menuName == null ? "" : menuName;
+    if (phrase.startsWith("밥")) {
+      return RICE.matcher(name).find();
+    }
+    if (phrase.startsWith("면")) {
+      return NOODLE.matcher(name).find();
+    }
+    return true;
+  }
+
+  /**
+   * 받침에 따라 이/가를 고른다. 여러 개를 " · " 로 이은 경우 마지막 단어에 붙는다.
+   *
+   * <p>예전에는 "밀이(가)" 처럼 둘 다 적어 보냈다. 화면에서 그대로 읽히면 어색하다.
+   * 한글이 아닌 글자로 끝나면 판단할 수 없으니 "이(가)" 로 둔다.
+   */
+  static String subject(String words) {
+    if (words == null || words.isBlank()) {
+      return "";
+    }
+    String w = words.trim();
+    char last = w.charAt(w.length() - 1);
+    if (last < 0xAC00 || last > 0xD7A3) {
+      return w + "이(가)";
+    }
+    return w + (((last - 0xAC00) % 28 != 0) ? "이" : "가");
   }
 
   /** 받침에 따라 은/는을 고른다 (SPEC 5.4). */

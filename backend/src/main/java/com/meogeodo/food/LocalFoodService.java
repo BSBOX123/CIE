@@ -38,6 +38,7 @@ import java.util.Optional;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -61,9 +62,6 @@ public class LocalFoodService {
 
   /** 지역 판정용 식당을 찾는 반경. 이 안에 식당이 없으면 지역을 모른다고 답한다. */
   static final int REGION_PROBE_RADIUS_M = 20_000;
-
-  /** 메뉴까지 열어 보는 근처 식당 수. 상세 한 번에 관광공사 호출이 이만큼 늘어난다. */
-  static final int MENU_PROBE_COUNT = 30;
 
   static final int MENU_PROBE_RADIUS_M = 5_000;
 
@@ -93,6 +91,14 @@ public class LocalFoodService {
   private final JudgmentEngine judgment;
   private final VocabularyService vocabulary;
 
+  /**
+   * 이름에 음식명이 없는 가게를 찾으려고 메뉴까지 열어 보는 근처 식당 수.
+   *
+   * <p>한 곳에 detailIntro2 한 번이다. 개발계정은 일일 1,000회 한도라 30 으로 두었더니
+   * 상세 몇십 번에 하루치가 바닥났다(2026-09-20). 운영계정 전환 전까지 0(끔)으로 둔다.
+   */
+  private final int menuProbeCount;
+
   public LocalFoodService(
       LocalFoodRepository foods,
       LocalFoodTipRepository tips,
@@ -102,7 +108,8 @@ public class LocalFoodService {
       MenuTextParser parser,
       RestaurantSearchService search,
       JudgmentEngine judgment,
-      VocabularyService vocabulary) {
+      VocabularyService vocabulary,
+      @Value("${meogeodo.local-food.menu-probe-count:0}") int menuProbeCount) {
     this.foods = foods;
     this.tips = tips;
     this.dishes = dishes;
@@ -112,6 +119,7 @@ public class LocalFoodService {
     this.search = search;
     this.judgment = judgment;
     this.vocabulary = vocabulary;
+    this.menuProbeCount = Math.max(0, menuProbeCount);
   }
 
   /** 현재 위치의 지역 음식. */
@@ -270,12 +278,14 @@ public class LocalFoodService {
     }
 
     // 근처 식당 메뉴 확인도 같은 시도만. 시도 경계 근처에서는 반경이 옆 시도로 넘어간다.
-    List<Place> around = tour.nearby(lat, lng, MENU_PROBE_RADIUS_M, 1, MENU_PROBE_COUNT).places()
-        .stream()
-        .filter(p -> here.code().equals(p.regionCode()))
-        .toList();
-    Map<String, Optional<Intro>> intros =
-        tour.intros(around.stream().map(Place::contentId).toList());
+    List<Place> around = menuProbeCount == 0
+        ? List.of()
+        : tour.nearby(lat, lng, MENU_PROBE_RADIUS_M, 1, menuProbeCount).places().stream()
+            .filter(p -> here.code().equals(p.regionCode()))
+            .toList();
+    Map<String, Optional<Intro>> intros = around.isEmpty()
+        ? new LinkedHashMap<>()
+        : tour.intros(around.stream().map(Place::contentId).toList());
     for (Place p : around) {
       Optional<Intro> intro = intros.get(p.contentId());
       if (intro != null && intro.isPresent() && sells(intro.get(), needles)) {

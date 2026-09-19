@@ -44,6 +44,10 @@ meogeodo:
     # 서버 전체에서 관광공사로 동시에 나가는 호출 수. 실측으로 5 는 안정적이었고
     # 10 에서 초당 한도(코드 23)에 걸렸다.
     max-concurrent: ${KOR_SERVICE_MAX_CONCURRENT:5}
+  local-food:
+    # 지역 음식 상세에서 이름에 음식명이 없는 가게를 찾으려고 메뉴를 열어 보는 근처 식당 수.
+    # 한 곳에 관광공사 호출 1회. 개발계정(일일 1,000회)에서는 0 으로 끈다. 운영계정이면 20~30.
+    menu-probe-count: ${LOCAL_FOOD_MENU_PROBE_COUNT:0}
   ai-service:
     base-url: ${AI_SERVICE_URL:http://localhost:8000}
   openapi:

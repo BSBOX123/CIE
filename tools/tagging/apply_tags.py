@@ -26,6 +26,7 @@ analysis/<배치>.jsonl 한 줄이 음식 하나다:
 DB 접속은 SSM 터널(localhost:3308)을 전제로 한다. docs/DEPLOY.md 참조.
 """
 import asyncio
+import gzip
 import json
 import os
 import sys
@@ -86,7 +87,32 @@ if missing:
     print(f"  DB 에 없는 음식 {len(missing)}건은 건너뜁니다: {missing[:5]}")
 rows = [r for r in rows if r["n"] in dish_ids]
 
-# ── 1. 영양성분 조회 (식약처 공공 API. Gemini 와 무관하다) ──
+# ── 1. 영양성분 조회 ──
+#
+# 로컬 색인(tools/nutrition/data/foods.jsonl.gz)이 있으면 그것으로 맞춘다.
+# API 는 이름 부분 일치 검색이라 "숙성생삼겹살" 같은 메뉴명이 거의 안 걸리고,
+# 5,000건을 물으면 일일 한도(10,000)에도 걸린다. 색인은 같은 데이터를
+# 통째로 받아 둔 것이고, 식약처 데이터는 저장에 제한이 없다.
+INDEX_FILE = os.path.join(ROOT, "tools", "nutrition", "data", "foods.jsonl.gz")
+
+
+def from_index():
+    from app.nutrition.client import to_facts  # noqa: PLC0415
+    from app.nutrition.match import NutritionIndex  # noqa: PLC0415
+
+    with gzip.open(INDEX_FILE, "rt", encoding="utf-8") as f:
+        index = NutritionIndex(json.loads(line) for line in f)
+    out = {}
+    ranks = {}
+    for r in rows:
+        match = index.find(r["n"])
+        out[r["n"]] = to_facts(match.record) if match else None
+        if match:
+            ranks[match.rank] = ranks.get(match.rank, 0) + 1
+    print(f"  색인 매칭 등급별: {dict(sorted(ranks.items()))} (0=정확, 1=통용명, 2=수식 제거, 3=긴 이름)")
+    return out
+
+
 async def fetch():
     client = NutritionClient(api_key=os.environ["PUBLIC_DATA_API_KEY"])
     sem = asyncio.Semaphore(8)  # 공공 API 를 과하게 때리지 않는다
@@ -104,7 +130,7 @@ async def fetch():
     return out
 
 
-nutrition = asyncio.run(fetch())
+nutrition = from_index() if os.path.exists(INDEX_FILE) else asyncio.run(fetch())
 print(f"영양성분 매칭: {sum(1 for v in nutrition.values() if v)}/{len(rows)}건")
 
 # ── 2. 기존 파이프라인으로 합친다 ──

@@ -48,6 +48,8 @@ ai-service/venv/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+# pip install -e 가 만드는 빌드 부산물
+ai-service/*.egg-info/
 
 # ── 원본 데이터 (CLAUDE.md 안전규칙: 수정/삭제 금지) ──
 data/raw/
@@ -57,3 +59,7 @@ data/raw/
 .vscode/
 *.iml
 .DS_Store
+
+# ── 참고용으로 받아 둔 자료 (저장소에 둘 필요 없음) ──
+caching.png
+docs/공유데이터_음식별_알레르기_주의성분.csv
